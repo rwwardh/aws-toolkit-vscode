@@ -1,5 +1,5 @@
 /*!
- * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -34,12 +34,17 @@ const globalMetadata = telemetryJson.metadataTypes
 const metrics = telemetryJson.metrics
 
 let output = `
-import { ext } from '../../shared/extensionGlobals'
+/*!
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { ext } from '../src/shared/extensionGlobals'
 
 enum TelemetryType {
 `
 metrics.forEach((metric: Metric) => {
-    output += `    ${metric.name.toUpperCase()} = "${metric.name}"\n`
+    output += `    ${metric.name.toUpperCase()} = '${metric.name}'\n`
 })
 
 output += '}\n\n'
@@ -48,7 +53,7 @@ globalMetadata.forEach((metadata: MetadataType) => {
     if ((metadata?.allowedValues?.length ?? 0) === 0) {
         return
     }
-    const values = metadata!.allowedValues!.map((item: string) => `"${item}"`).join(' | ')
+    const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
     output += `type ${metadata.name} = ${values}`
 
@@ -86,7 +91,7 @@ metrics.forEach(metric => {
         .map((m: MetadataType) => {
             let t = m.name
             if ((m?.allowedValues?.length ?? 0) === 0) {
-                t = m.type
+                t = 'string'
             }
 
             return `${m.name}${m.required ? '' : '?'}: ${t},`
@@ -96,20 +101,19 @@ metrics.forEach(metric => {
     output += `interface ${name} {
     value?: number
     ${args}
-}\n\n
-`
-    output += `function record${name}(args: ${name}){
-    ext.telemetry.record(
+}\n\n`
+    output += `function record${name}(args: ${name}) {
+    ext.telemetry.newrecord(
             {
                 name: TelemetryType.${metric.name.toUpperCase()},
-                value: args.value ?? 1.0,
-                unit: ${metric.type},
-                metadata: [{\n                    ${metadata
-                    .map((m: MetadataType) => `${m.name}: args.${m.name}`)
-                    .join('\n                    ')}\n                }]
+                value: args.value ?? 1,
+                unit: '${metric.unit}',
+                metadata: new Map<string, string>([\n                    ${metadata
+                    .map((m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`)
+                    .join(',\n                    ')}\n                ])
             }
     )
-}\n\n`
+}\n`
 })
 
 writeFileSync('build-scripts/telemetry.generated.ts', output)
