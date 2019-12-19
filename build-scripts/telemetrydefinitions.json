@@ -12,12 +12,12 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
-                "$runtime",
+                "$runtime" /*,
                 {
                     "name": "optionalThing",
                     "type": "string",
                     "required": false
-                }
+                }*/
             ]
         }
     ]

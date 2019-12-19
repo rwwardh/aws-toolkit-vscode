@@ -14,7 +14,6 @@ type runtime = 'linux' | 'windows' | 'mac'
 interface LambdaDelete {
     value?: number
     runtime: runtime
-    optionalThing?: string
 }
 
 function recordLambdaDelete(args: LambdaDelete) {
@@ -22,9 +21,6 @@ function recordLambdaDelete(args: LambdaDelete) {
         name: TelemetryType.LAMBDA_DELETE,
         value: args.value ?? 1,
         unit: 'none',
-        metadata: new Map<string, string>([
-            ['runtime', args.runtime?.toString() ?? ''],
-            ['optionalThing', args.optionalThing?.toString() ?? '']
-        ])
+        metadata: new Map<string, string>([['runtime', args.runtime?.toString() ?? '']])
     })
 }

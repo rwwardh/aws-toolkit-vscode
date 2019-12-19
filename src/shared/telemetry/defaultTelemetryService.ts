@@ -14,7 +14,7 @@ import { DefaultTelemetryPublisher } from './defaultTelemetryPublisher'
 import { TelemetryEvent } from './telemetryEvent'
 import { TelemetryPublisher } from './telemetryPublisher'
 import { TelemetryService } from './telemetryService'
-import { ACCOUNT_METADATA_KEY, AccountStatus, TelemetryNamespace } from './telemetryTypes'
+import { ACCOUNT_METADATA_KEY, AccountStatus, TelemetryNamespace, Datum } from './telemetryTypes'
 
 export class DefaultTelemetryService implements TelemetryService {
     public static readonly TELEMETRY_COGNITO_ID_KEY = 'telemetryId'
@@ -33,6 +33,7 @@ export class DefaultTelemetryService implements TelemetryService {
     private _timer?: NodeJS.Timer
     private publisher?: TelemetryPublisher
     private readonly _eventQueue: TelemetryEvent[]
+    private readonly newEventQueue: Datum[]
 
     public constructor(
         private readonly context: ExtensionContext,
@@ -48,6 +49,7 @@ export class DefaultTelemetryService implements TelemetryService {
 
         this.startTime = new Date()
         this._eventQueue = DefaultTelemetryService.readEventsFromCache(this.persistFilePath)
+        this.newEventQueue = []
 
         this._flushPeriod = DefaultTelemetryService.DEFAULT_FLUSH_PERIOD_MILLIS
 
@@ -136,6 +138,10 @@ export class DefaultTelemetryService implements TelemetryService {
         }
     }
 
+    public newrecord(event: Datum): void {
+        this.newEventQueue.push(event)
+    }
+
     public get records(): ReadonlyArray<TelemetryEvent> {
         return this._eventQueue
     }
@@ -151,6 +157,7 @@ export class DefaultTelemetryService implements TelemetryService {
             }
             if (this.publisher !== undefined) {
                 this.publisher.enqueue(...this._eventQueue)
+                this.publisher.newenqueue(...this.newEventQueue)
                 await this.publisher.flush()
                 this.clearRecords()
             }
