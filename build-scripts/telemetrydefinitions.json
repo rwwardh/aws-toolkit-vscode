@@ -12,7 +12,14 @@
         {
             "name": "lambda_delete",
             "type": "none",
-            "metadata": ["$runtime"]
+            "metadata": [
+                "$runtime",
+                {
+                    "name": "optionalThing",
+                    "type": "string",
+                    "required": false
+                }
+            ]
         }
     ]
 }
