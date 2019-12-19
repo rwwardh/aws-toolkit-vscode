@@ -102,7 +102,7 @@ metrics.forEach(metric => {
     value?: number
     ${args}
 }\n\n`
-    output += `function record${name}(args: ${name}) {
+    output += `export function record${name}(args: ${name}) {
     ext.telemetry.newrecord(
             {
                 name: TelemetryType.${metric.name.toUpperCase()},

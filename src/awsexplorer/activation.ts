@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode'
 
+import { recordLambdaDelete } from '../../build-scripts/telemetry.generated'
 import { deleteCloudFormation } from '../lambda/commands/deleteCloudFormation'
 import { deleteLambda } from '../lambda/commands/deleteLambda'
 import { invokeLambda } from '../lambda/commands/invokeLambda'
@@ -129,6 +130,7 @@ async function registerAwsExplorerCommands(
 }
 
 async function recordNumberOfActiveRegionsMetric(awsExplorer: AwsExplorer) {
+    recordLambdaDelete({ runtime: 'windows' })
     const numOfActiveRegions = awsExplorer.getRegionNodesSize()
     const currTime = new Date()
 

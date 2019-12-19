@@ -16,7 +16,7 @@ interface LambdaDelete {
     runtime: runtime
 }
 
-function recordLambdaDelete(args: LambdaDelete) {
+export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.newrecord({
         name: TelemetryType.LAMBDA_DELETE,
         value: args.value ?? 1,
