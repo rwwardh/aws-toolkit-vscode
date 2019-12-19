@@ -1,0 +1,18 @@
+{
+    "metadataTypes": [
+        {
+            "name": "runtime",
+            "type": "string",
+            "allowedValues": ["linux", "windows", "mac"],
+            "required": true
+        }
+    ],
+    "metrics": [
+        // called when deleting lambda
+        {
+            "name": "lambda_delete",
+            "type": "none",
+            "metadata": ["$runtime"]
+        }
+    ]
+}
