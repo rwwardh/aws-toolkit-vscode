@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { readFileSync } from 'fs-extra'
+import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
 
 type MetricType = 'none' | 'count'
-type MetadataItemType = 'string'
 
 interface MetadataType {
     name: string
-    type: MetadataItemType
     allowedValues?: string[]
     required: boolean
 }
@@ -20,7 +18,7 @@ type MetricMetadataType = MetadataType | string
 
 interface Metric {
     name: string
-    type: MetricType
+    unit: MetricType
     metadata: MetricMetadataType[]
 }
 
@@ -101,7 +99,7 @@ metrics.forEach(metric => {
 }\n\n
 `
     output += `function record${name}(args: ${name}){
-    ext.record(
+    ext.telemetry.record(
             {
                 name: TelemetryType.${metric.name.toUpperCase()},
                 value: args.value ?? 1.0,
@@ -114,4 +112,5 @@ metrics.forEach(metric => {
 }\n\n`
 })
 
+writeFileSync('build-scripts/telemetry.generated.ts', output)
 console.log(output)

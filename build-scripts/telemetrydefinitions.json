@@ -2,7 +2,6 @@
     "metadataTypes": [
         {
             "name": "runtime",
-            "type": "string",
             "allowedValues": ["linux", "windows", "mac"],
             "required": true
         }
@@ -11,7 +10,7 @@
         // called when deleting lambda
         {
             "name": "lambda_delete",
-            "type": "none",
+            "unit": "none",
             "metadata": [
                 "$runtime",
                 {
