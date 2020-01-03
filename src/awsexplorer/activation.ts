@@ -15,6 +15,7 @@ import { AwsContext } from '../shared/awsContext'
 import { AwsContextTreeCollection } from '../shared/awsContextTreeCollection'
 import { ext } from '../shared/extensionGlobals'
 import { safeGet } from '../shared/extensionUtilities'
+import { getLogger } from '../shared/logger'
 import { RegionProvider } from '../shared/regions/regionProvider'
 import { ResourceFetcher } from '../shared/resourceFetcher'
 import { TelemetryNamespace } from '../shared/telemetry/telemetryTypes'
@@ -23,6 +24,7 @@ import { AWSTreeNodeBase } from '../shared/treeview/nodes/awsTreeNodeBase'
 import { ErrorNode } from '../shared/treeview/nodes/errorNode'
 import { showErrorDetails } from '../shared/treeview/webviews/showErrorDetails'
 import { AwsExplorer } from './awsExplorer'
+import { checkExplorerForDefaultRegion } from './defaultRegion'
 import { RegionNode } from './regionNode'
 
 /**
@@ -47,6 +49,12 @@ export async function activate(activateArguments: {
     await recordNumberOfActiveRegionsMetric(awsExplorer)
 
     activateArguments.awsContextTrees.addTree(awsExplorer)
+
+    updateAwsExplorerWhenAwsContextCredentialsChange(
+        awsExplorer,
+        activateArguments.awsContext,
+        activateArguments.context
+    )
 }
 
 async function registerAwsExplorerCommands(
@@ -139,4 +147,21 @@ async function recordNumberOfActiveRegionsMetric(awsExplorer: AwsExplorer) {
         createTime: currTime,
         data: [{ name: 'activeregions', value: numOfActiveRegions, unit: 'Count' }]
     })
+}
+
+function updateAwsExplorerWhenAwsContextCredentialsChange(
+    awsExplorer: AwsExplorer,
+    awsContext: AwsContext,
+    extensionContext: vscode.ExtensionContext
+) {
+    extensionContext.subscriptions.push(
+        awsContext.onDidChangeContext(async credentialsChangedEvent => {
+            getLogger().verbose(`Credentials changed (${credentialsChangedEvent.profileName}), updating AWS Explorer`)
+            awsExplorer.refresh()
+
+            if (credentialsChangedEvent.profileName) {
+                await checkExplorerForDefaultRegion(credentialsChangedEvent.profileName, awsContext, awsExplorer)
+            }
+        })
+    )
 }

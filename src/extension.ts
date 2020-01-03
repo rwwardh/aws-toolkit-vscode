@@ -8,17 +8,18 @@ import * as nls from 'vscode-nls'
 
 import { activate as activateAwsExplorer } from './awsexplorer/activation'
 import { activate as activateCdk } from './cdk/activation'
+import { initialize as initializeCredentials, loginWithMostRecentCredentials } from './credentials/activation'
+import { initializeAwsCredentialsStatusBarItem } from './credentials/awsCredentialsStatusBarItem'
+import { LoginManager } from './credentials/loginManager'
 import { activate as activateSchemas } from './eventSchemas/activation'
 import { DefaultAWSClientBuilder } from './shared/awsClientBuilder'
 import { AwsContextTreeCollection } from './shared/awsContextTreeCollection'
 import { DefaultToolkitClientBuilder } from './shared/clients/defaultToolkitClientBuilder'
 import { documentationUrl, extensionSettingsPrefix, githubUrl, reportIssueUrl } from './shared/constants'
 import { DefaultCredentialsFileReaderWriter } from './shared/credentials/defaultCredentialsFileReaderWriter'
-import { UserCredentialsUtils } from './shared/credentials/userCredentialsUtils'
 import { DefaultAwsContext } from './shared/defaultAwsContext'
 import { DefaultAWSContextCommands } from './shared/defaultAwsContextCommands'
 import { DefaultResourceFetcher } from './shared/defaultResourceFetcher'
-import { DefaultAWSStatusBar } from './shared/defaultStatusBar'
 import { ext } from './shared/extensionGlobals'
 import { showQuickStartWebview, toastNewUser } from './shared/extensionUtilities'
 import { getLogger } from './shared/logger'
@@ -37,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const localize = nls.loadMessageBundle()
 
     ext.context = context
-    await activateLogger()
+    await activateLogger(context)
     const toolkitOutputChannel = vscode.window.createOutputChannel(localize('AWS.channel.aws.toolkit', 'AWS Toolkit'))
 
     try {
@@ -45,27 +46,28 @@ export async function activate(context: vscode.ExtensionContext) {
         initializeIconPaths(context)
 
         const toolkitSettings = new DefaultSettingsConfiguration(extensionSettingsPrefix)
-        const awsContext = new DefaultAwsContext(toolkitSettings, context)
+        const awsContext = new DefaultAwsContext(context)
         const awsContextTrees = new AwsContextTreeCollection()
         const resourceFetcher = new DefaultResourceFetcher()
         const regionProvider = new DefaultRegionProvider(context, resourceFetcher)
+        const loginManager = new LoginManager(awsContext)
 
-        ext.awsContextCommands = new DefaultAWSContextCommands(awsContext, awsContextTrees, regionProvider)
+        await initializeAwsCredentialsStatusBarItem(awsContext, context)
+        ext.awsContextCommands = new DefaultAWSContextCommands(
+            awsContext,
+            awsContextTrees,
+            regionProvider,
+            loginManager
+        )
         ext.sdkClientBuilder = new DefaultAWSClientBuilder(awsContext)
         ext.toolkitClientBuilder = new DefaultToolkitClientBuilder()
 
-        // check to see if current user is valid
-        const currentProfile = awsContext.getCredentialProfileName()
-        if (currentProfile) {
-            const successfulLogin = await UserCredentialsUtils.addUserDataToContext(currentProfile, awsContext)
-            if (!successfulLogin) {
-                await UserCredentialsUtils.removeUserDataFromContext(awsContext)
-                // tslint:disable-next-line: no-floating-promises
-                UserCredentialsUtils.notifyUserCredentialsAreBad(currentProfile)
-            }
-        }
+        await initializeCredentials({
+            extensionContext: context,
+            awsContext: awsContext,
+            settingsConfiguration: toolkitSettings
+        })
 
-        ext.statusBar = new DefaultAWSStatusBar(awsContext, context)
         ext.telemetry = new DefaultTelemetryService(context, awsContext)
         new AwsTelemetryOptOut(ext.telemetry, toolkitSettings).ensureUserNotified().catch(err => {
             console.warn(`Exception while displaying opt-out message: ${err}`)
@@ -133,8 +135,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
         await activateSchemas()
 
-        await ext.statusBar.updateContext(undefined)
-
         await ExtensionDisposableFiles.initialize(context)
 
         await activateServerless({
@@ -147,6 +147,8 @@ export async function activate(context: vscode.ExtensionContext) {
         })
 
         toastNewUser(context, getLogger())
+
+        await loginWithMostRecentCredentials(toolkitSettings, loginManager)
     } catch (error) {
         const channelLogger = getChannelLogger(toolkitOutputChannel)
         channelLogger.error('AWS.channel.aws.toolkit.activation.error', 'Error Activating AWS Toolkit', error as Error)
