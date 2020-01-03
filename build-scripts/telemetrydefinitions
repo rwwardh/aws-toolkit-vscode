@@ -1,7 +1,0 @@
-types:
-runtime, string, true, linux, windows, mac
-metrics:
-# Add entries in alphabetical order
-lambda_delete, none, runtime
-lambda_invoke_local, count
-lambda_invoke_remove, count
