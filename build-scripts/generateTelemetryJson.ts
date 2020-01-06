@@ -163,8 +163,8 @@ metrics.forEach((metric: Metric) => {
 })
 
 output += `
-export function durationTilNow(d: Date): number {
-    return Number(d) - Date.now()
+export function millisecondsSince(d: Date): number {
+    return Date.now() - Number(d)
 }
 `
 
