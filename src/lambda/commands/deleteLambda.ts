@@ -6,6 +6,7 @@
 import * as vscode from 'vscode'
 import * as nls from 'vscode-nls'
 
+import { recordLambdaDelete } from '../../../build-scripts/telemetry.generated'
 import { LambdaClient } from '../../shared/clients/lambdaClient'
 
 const localize = nls.loadMessageBundle()
@@ -63,5 +64,7 @@ export async function deleteLambda({
         restParams.outputChannel.appendLine(String(err)) // linter hates toString on type any
         restParams.outputChannel.appendLine('')
         restParams.onRefresh() // Refresh in case it was already deleted.
+    } finally {
+        recordLambdaDelete({ createTime: startTime })
     }
 }

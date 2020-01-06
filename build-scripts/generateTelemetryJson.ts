@@ -89,19 +89,20 @@ metrics.forEach(metric => {
             t = 'string'
         }
 
-        return `${m.name}${m.required ? '' : '?'}: ${t},`
+        return `${m.name}${m.required ? '' : '?'}: ${t}`
     })
+    args.push(...globalArgs())
 
     output += `interface ${name} {
     value?: number
-    ${args}
+    ${args.join(',')}
 }`
-    output += `export function record${name}(args: ${name}) {
+    output += `export function record${name}(args${metadata.every(item => !item.required) ? '?' : ''}: ${name}) {
     ext.telemetry.record({
-            createTime: new Date(),
+            createTime: args?.createTime ?? new Date(),
             data: [{
                 name: TelemetryType.${metric.name.toUpperCase()},
-                value: args.value ?? 1,
+                value: args?.value ?? 1,
                 unit: '${metric.unit}',
                 metadata: new Map<string, string>([\n                    ${metadata.map(
                     (m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`
@@ -113,3 +114,8 @@ metrics.forEach(metric => {
 
 writeFileSync('build-scripts/telemetry.generated.ts', output)
 console.log(output)
+
+///////////////////
+function globalArgs(): string[] {
+    return ['createTime?: Date']
+}
