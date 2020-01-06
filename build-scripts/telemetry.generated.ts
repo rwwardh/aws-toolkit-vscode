@@ -67,3 +67,6 @@ export function recordLambdaCreate(args: LambdaCreate) {
         ]
     })
 }
+export function durationTilNow(d: Date): number {
+    return Number(d) - Date.now()
+}

@@ -163,6 +163,12 @@ metrics.forEach((metric: Metric) => {
 }`
 })
 
+output += `
+export function durationTilNow(d: Date): number {
+    return Number(d) - Date.now()
+}
+`
+
 writeFileSync('build-scripts/telemetry.generated.ts', output)
 
 console.log('Done generating, formatting!')

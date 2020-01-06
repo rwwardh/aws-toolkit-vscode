@@ -6,7 +6,7 @@
 import * as vscode from 'vscode'
 import * as nls from 'vscode-nls'
 
-import { recordLambdaDelete, result } from '../../../build-scripts/telemetry.generated'
+import { durationTilNow, recordLambdaDelete, result } from '../../../build-scripts/telemetry.generated'
 import { LambdaClient } from '../../shared/clients/lambdaClient'
 
 const localize = nls.loadMessageBundle()
@@ -69,7 +69,7 @@ export async function deleteLambda({
     } finally {
         recordLambdaDelete({
             createTime: startTime,
-            duration: Number(startTime) - Date.now(),
+            duration: durationTilNow(startTime),
             result: deleteResult
         })
     }
