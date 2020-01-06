@@ -17,6 +17,11 @@
                 "python2.7"
             ],
             "required": true
+        },
+        {
+            "name": "duration",
+            "type": "int",
+            "required": true
         }
     ],
     "metrics": [
@@ -25,12 +30,7 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
-                /*
-                {
-                    "name": "optionalThing",
-                    "type": "string",
-                    "required": false
-                }*/
+                "$duration"
             ]
         },
         // called when deleting lambda

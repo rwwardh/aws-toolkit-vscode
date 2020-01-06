@@ -6,10 +6,12 @@
 import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
 
+type AllowedTypes = 'string' | 'int'
 type MetricType = 'none' | 'count'
 
 interface MetadataType {
     name: string
+    type?: AllowedTypes
     allowedValues?: string[]
     required: boolean
 }
@@ -66,7 +68,9 @@ metrics.forEach(metric => {
                 console.log('you messed up son, you have to preface your references with the sigil "$"')
                 throw undefined
             }
-            const foundMetadata = globalMetadata.find((candidate: MetadataType) => candidate.name === s.substring(1))
+            const foundMetadata: MetadataType | undefined = globalMetadata.find(
+                (candidate: MetadataType) => candidate.name === s.substring(1)
+            )
             if (!foundMetadata) {
                 console.log('Come on you can not reference things that do not exist')
                 throw undefined
@@ -86,7 +90,24 @@ metrics.forEach(metric => {
     const args = metadata.map((m: MetadataType) => {
         let t = m.name
         if ((m?.allowedValues?.length ?? 0) === 0) {
-            t = 'string'
+            switch (m.type) {
+                case undefined: {
+                    t = 'string'
+                    break
+                }
+                case 'string': {
+                    t = 'string'
+                    break
+                }
+                case 'int': {
+                    t = 'number'
+                    break
+                }
+                default: {
+                    console.log(`unkown type ${m?.type} in metadata ${m.name}`)
+                    throw undefined
+                }
+            }
         }
 
         return `${m.name}${m.required ? '' : '?'}: ${t}`

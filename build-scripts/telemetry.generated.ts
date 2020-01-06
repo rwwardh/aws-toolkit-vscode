@@ -24,9 +24,10 @@ type lambdaruntime =
     | 'python2.7'
 interface LambdaDelete {
     value?: number
+    duration: number
     createTime?: Date
 }
-export function recordLambdaDelete(args?: LambdaDelete) {
+export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.record({
         createTime: args?.createTime ?? new Date(),
         data: [
@@ -34,7 +35,7 @@ export function recordLambdaDelete(args?: LambdaDelete) {
                 name: TelemetryType.LAMBDA_DELETE,
                 value: args?.value ?? 1,
                 unit: 'none',
-                metadata: new Map<string, string>([])
+                metadata: new Map<string, string>([['duration', args.duration?.toString() ?? '']])
             }
         ]
     })
