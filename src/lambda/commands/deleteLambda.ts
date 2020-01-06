@@ -46,7 +46,7 @@ export async function deleteLambda({
         return
     }
     const startTime = new Date()
-    //let result: result = 'succeded'
+    let deleteResult = result.succeeded
     try {
         const isConfirmed = await onConfirm()
         if (isConfirmed) {
@@ -54,6 +54,7 @@ export async function deleteLambda({
             restParams.onRefresh()
         }
     } catch (err) {
+        deleteResult = result.failed
         restParams.outputChannel.show(true)
         restParams.outputChannel.appendLine(
             localize(
@@ -69,7 +70,7 @@ export async function deleteLambda({
         recordLambdaDelete({
             createTime: startTime,
             duration: Number(startTime) - Date.now(),
-            result: result.succeeded
+            result: deleteResult
         })
     }
 }

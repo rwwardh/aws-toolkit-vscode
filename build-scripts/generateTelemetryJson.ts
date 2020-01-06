@@ -81,7 +81,7 @@ const file = readFileSync('build-scripts/telemetrydefinitions.jsonc', 'utf8')
 const errors: jsonParser.ParseError[] = []
 const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
 
-if(errors.length > 0) {
+if (errors.length > 0) {
     console.error(`Errors while trying to parse the definitions file ${errors.join('\n')}`)
     throw undefined
 }
