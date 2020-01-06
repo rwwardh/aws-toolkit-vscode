@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
 
-type AllowedTypes = 'string' | 'int'
+type AllowedTypes = 'string' | 'int' | 'enum'
 type MetricType = 'none' | 'count'
 
 interface MetadataType {
@@ -24,9 +24,53 @@ interface Metric {
     metadata: MetricMetadataType[]
 }
 
+function metricToTypeName(m: Metric): string {
+    return m.name
+        .split('_')
+        .map(item => item.replace(item[0], item[0].toUpperCase()))
+        .join('')
+}
+
 interface MetricDefinitionRoot {
     metadataTypes: MetadataType[]
     metrics: Metric[]
+}
+
+function globalArgs(): string[] {
+    return ['createTime?: Date']
+}
+
+function getArgsFromMetadata(m: MetadataType): string {
+    let t = m.name
+    if ((m?.allowedValues?.length ?? 0) === 0) {
+        switch (m.type) {
+            case undefined: {
+                t = 'string'
+                break
+            }
+            case 'string': {
+                t = 'string'
+                break
+            }
+            case 'int': {
+                t = 'number'
+                break
+            }
+            default: {
+                console.log(`unkown type ${m?.type} in metadata ${m.name}`)
+                throw undefined
+            }
+        }
+    }
+
+    return `${m.name}${m.required ? '' : '?'}: ${t}`
+}
+
+function generateArgs(metadata: MetadataType[]): string[] {
+    const args = metadata.map(getArgsFromMetadata)
+    args.push(...globalArgs())
+
+    return args
 }
 
 const file = readFileSync('build-scripts/telemetrydefinitions.jsonc', 'utf8')
@@ -55,24 +99,30 @@ globalMetadata.forEach((metadata: MetadataType) => {
     if ((metadata?.allowedValues?.length ?? 0) === 0) {
         return
     }
-    const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
+    if (metadata?.type === 'enum') {
+        output += `export enum ${metadata.name.replace('.', '')} { ${metadata!.allowedValues!.map(
+            (item: string) => `${item.replace('.', '')} = '${item}'`
+        )}}`
+    } else {
+        const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-    output += `type ${metadata.name} = ${values}\n`
+        output += `export type ${metadata.name} = ${values}\n`
+    }
 })
 
-metrics.forEach(metric => {
+metrics.forEach((metric: Metric) => {
     const metadata = metric.metadata.map(item => {
         if (typeof item === 'string') {
             const s = item as string
             if (!s.startsWith('$')) {
-                console.log('you messed up son, you have to preface your references with the sigil "$"')
+                console.log('You have to preface your references with the sigil "$"')
                 throw undefined
             }
             const foundMetadata: MetadataType | undefined = globalMetadata.find(
                 (candidate: MetadataType) => candidate.name === s.substring(1)
             )
             if (!foundMetadata) {
-                console.log('Come on you can not reference things that do not exist')
+                console.log(`Metric ${metric.name} references metadata ${s.substring(1)} that is not found!`)
                 throw undefined
             }
 
@@ -82,37 +132,8 @@ metrics.forEach(metric => {
         }
     })
 
-    const name = metric.name
-        .split('_')
-        .map(item => item.replace(item[0], item[0].toUpperCase()))
-        .join('')
-
-    const args = metadata.map((m: MetadataType) => {
-        let t = m.name
-        if ((m?.allowedValues?.length ?? 0) === 0) {
-            switch (m.type) {
-                case undefined: {
-                    t = 'string'
-                    break
-                }
-                case 'string': {
-                    t = 'string'
-                    break
-                }
-                case 'int': {
-                    t = 'number'
-                    break
-                }
-                default: {
-                    console.log(`unkown type ${m?.type} in metadata ${m.name}`)
-                    throw undefined
-                }
-            }
-        }
-
-        return `${m.name}${m.required ? '' : '?'}: ${t}`
-    })
-    args.push(...globalArgs())
+    const name = metricToTypeName(metric)
+    const args = generateArgs(metadata)
 
     output += `interface ${name} {
     value?: number
@@ -135,8 +156,3 @@ metrics.forEach(metric => {
 
 writeFileSync('build-scripts/telemetry.generated.ts', output)
 console.log(output)
-
-///////////////////
-function globalArgs(): string[] {
-    return ['createTime?: Date']
-}

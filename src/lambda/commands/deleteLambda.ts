@@ -6,7 +6,7 @@
 import * as vscode from 'vscode'
 import * as nls from 'vscode-nls'
 
-import { recordLambdaDelete } from '../../../build-scripts/telemetry.generated'
+import { recordLambdaDelete, result } from '../../../build-scripts/telemetry.generated'
 import { LambdaClient } from '../../shared/clients/lambdaClient'
 
 const localize = nls.loadMessageBundle()
@@ -46,6 +46,7 @@ export async function deleteLambda({
         return
     }
     const startTime = new Date()
+    //let result: result = 'succeded'
     try {
         const isConfirmed = await onConfirm()
         if (isConfirmed) {
@@ -65,6 +66,10 @@ export async function deleteLambda({
         restParams.outputChannel.appendLine('')
         restParams.onRefresh() // Refresh in case it was already deleted.
     } finally {
-        recordLambdaDelete({ createTime: startTime, duration: Number(startTime) - Date.now(), result: 'failed' })
+        recordLambdaDelete({
+            createTime: startTime,
+            duration: Number(startTime) - Date.now(),
+            result: result.succeeded
+        })
     }
 }

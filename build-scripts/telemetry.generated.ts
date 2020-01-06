@@ -9,7 +9,7 @@ enum TelemetryType {
     LAMBDA_DELETE = 'lambda_delete',
     LAMBDA_CREATE = 'lambda_create'
 }
-type lambdaruntime =
+export type lambdaruntime =
     | 'dotnetcore2.1'
     | 'nodejs12.x'
     | 'nodejs10.x'
@@ -22,7 +22,11 @@ type lambdaruntime =
     | 'python3.7'
     | 'python3.6'
     | 'python2.7'
-type result = 'succeeded' | 'failed' | 'cancelled'
+export enum result {
+    succeeded = 'succeeded',
+    failed = 'failed',
+    cancelled = 'cancelled'
+}
 interface LambdaDelete {
     value?: number
     duration: number

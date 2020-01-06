@@ -26,7 +26,8 @@
         {
             "name": "result",
             "allowedValues": ["succeeded", "failed", "cancelled"],
-            "required": true
+            "required": true,
+            "type": "enum"
         }
     ],
     "metrics": [
@@ -39,7 +40,7 @@
                 "$result"
             ]
         },
-        // called when deleting lambda
+        // called when creating lambda
         {
             "name": "lambda_create",
             "unit": "none",
