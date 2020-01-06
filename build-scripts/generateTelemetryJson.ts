@@ -10,6 +10,7 @@ type MetricType = 'none' | 'count'
 
 interface MetadataType {
     name: string
+    alias?: string
     allowedValues?: string[]
     required: boolean
 }
@@ -55,7 +56,7 @@ globalMetadata.forEach((metadata: MetadataType) => {
     }
     const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-    output += `type ${metadata.name} = ${values}`
+    output += `type ${metadata.alias ?? metadata.name} = ${values}`
 
     output += '\n'
 })
