@@ -6,7 +6,8 @@
 import { ext } from '../src/shared/extensionGlobals'
 
 enum TelemetryType {
-    LAMBDA_DELETE = 'lambda_delete'
+    LAMBDA_DELETE = 'lambda_delete',
+    LAMBDA_CREATE = 'lambda_create'
 }
 
 type lambdaruntime =
@@ -25,12 +26,24 @@ type lambdaruntime =
 
 interface LambdaDelete {
     value?: number
-    lambdaruntime: lambdaruntime
 }
 
 export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.newrecord({
         name: TelemetryType.LAMBDA_DELETE,
+        value: args.value ?? 1,
+        unit: 'none',
+        metadata: new Map<string, string>([])
+    })
+}
+interface LambdaCreate {
+    value?: number
+    lambdaruntime: lambdaruntime
+}
+
+export function recordLambdaCreate(args: LambdaCreate) {
+    ext.telemetry.newrecord({
+        name: TelemetryType.LAMBDA_CREATE,
         value: args.value ?? 1,
         unit: 'none',
         metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])

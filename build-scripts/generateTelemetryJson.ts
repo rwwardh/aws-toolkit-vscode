@@ -44,7 +44,7 @@ import { ext } from '../src/shared/extensionGlobals'
 enum TelemetryType {
 `
 metrics.forEach((metric: Metric) => {
-    output += `    ${metric.name.toUpperCase()} = '${metric.name}'\n`
+    output += `    ${metric.name.toUpperCase()} = '${metric.name}',\n`
 })
 
 output += '}\n\n'

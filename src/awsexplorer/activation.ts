@@ -86,16 +86,14 @@ async function registerAwsExplorerCommands(
         telemetryName: 'Command_aws.refreshAwsExplorer'
     })
 
-    registerCommand({
-        command: 'aws.deleteLambda',
-        callback: async (node: LambdaFunctionNode) =>
-            await deleteLambda({
-                deleteParams: { functionName: node.configuration.FunctionName || '' },
-                lambdaClient: ext.toolkitClientBuilder.createLambdaClient(node.regionCode),
-                outputChannel: lambdaOutputChannel,
-                onRefresh: () => awsExplorer.refresh(node.parent)
-            }),
-        telemetryName: 'lambda_delete'
+    vscode.commands.registerCommand('aws.deleteLambda', async (...args: any[]) => {
+        const node = args[0] as LambdaFunctionNode
+        await deleteLambda({
+            deleteParams: { functionName: node.configuration.FunctionName || '' },
+            lambdaClient: ext.toolkitClientBuilder.createLambdaClient(node.regionCode),
+            outputChannel: lambdaOutputChannel,
+            onRefresh: () => awsExplorer.refresh(node.parent)
+        })
     })
 
     registerCommand({

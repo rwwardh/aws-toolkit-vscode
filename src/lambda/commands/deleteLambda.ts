@@ -44,6 +44,7 @@ export async function deleteLambda({
     if (!deleteParams.functionName) {
         return
     }
+    const startTime = new Date()
     try {
         const isConfirmed = await onConfirm()
         if (isConfirmed) {

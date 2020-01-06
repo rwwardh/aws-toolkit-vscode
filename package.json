@@ -465,6 +465,7 @@
         "lint": "tslint --project .",
         "lintfix": "tslint --project . --fix",
         "package": "vsce package",
+        "generateTelemetry": "ts-node ./build-scripts/generateTelemetryJson.ts && npx prettier --write ./build-scripts/*.ts",
         "install-plugin": "vsce package -o aws-toolkit-vscode-test.vsix && code --install-extension aws-toolkit-vscode-test.vsix",
         "newChange": "ts-node ./build-scripts/newChange.ts",
         "createRelease": "ts-node ./build-scripts/createRelease.ts"

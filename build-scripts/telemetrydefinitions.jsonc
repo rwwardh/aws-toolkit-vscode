@@ -25,6 +25,19 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
+                /*
+                {
+                    "name": "optionalThing",
+                    "type": "string",
+                    "required": false
+                }*/
+            ]
+        },
+        // called when deleting lambda
+        {
+            "name": "lambda_create",
+            "unit": "none",
+            "metadata": [
                 "$lambdaruntime" /*,
                 {
                     "name": "optionalThing",
