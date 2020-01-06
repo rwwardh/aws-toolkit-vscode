@@ -22,9 +22,11 @@ type lambdaruntime =
     | 'python3.7'
     | 'python3.6'
     | 'python2.7'
+type result = 'succeeded' | 'failed' | 'cancelled'
 interface LambdaDelete {
     value?: number
     duration: number
+    result: result
     createTime?: Date
 }
 export function recordLambdaDelete(args: LambdaDelete) {
@@ -35,7 +37,10 @@ export function recordLambdaDelete(args: LambdaDelete) {
                 name: TelemetryType.LAMBDA_DELETE,
                 value: args?.value ?? 1,
                 unit: 'none',
-                metadata: new Map<string, string>([['duration', args.duration?.toString() ?? '']])
+                metadata: new Map<string, string>([
+                    ['duration', args.duration?.toString() ?? ''],
+                    ['result', args.result?.toString() ?? '']
+                ])
             }
         ]
     })

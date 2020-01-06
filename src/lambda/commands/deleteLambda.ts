@@ -65,6 +65,6 @@ export async function deleteLambda({
         restParams.outputChannel.appendLine('')
         restParams.onRefresh() // Refresh in case it was already deleted.
     } finally {
-        recordLambdaDelete({ createTime: startTime, duration: Number(startTime) - Date.now() })
+        recordLambdaDelete({ createTime: startTime, duration: Number(startTime) - Date.now(), result: 'failed' })
     }
 }

@@ -22,6 +22,11 @@
             "name": "duration",
             "type": "int",
             "required": true
+        },
+        {
+            "name": "result",
+            "allowedValues": ["succeeded", "failed", "cancelled"],
+            "required": true
         }
     ],
     "metrics": [
@@ -30,7 +35,8 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
-                "$duration"
+                "$duration",
+                "$result"
             ]
         },
         // called when deleting lambda
