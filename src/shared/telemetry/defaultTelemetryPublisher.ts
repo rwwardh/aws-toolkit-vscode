@@ -8,7 +8,6 @@ import { DefaultTelemetryClient } from './defaultTelemetryClient'
 import { TelemetryClient } from './telemetryClient'
 import { TelemetryEvent } from './telemetryEvent'
 import { TelemetryPublisher } from './telemetryPublisher'
-import { Datum } from './telemetryTypes'
 
 export interface IdentityPublisherTuple {
     cognitoIdentityId: string
@@ -19,7 +18,6 @@ export class DefaultTelemetryPublisher implements TelemetryPublisher {
     private static readonly DEFAULT_MAX_BATCH_SIZE = 20
 
     private readonly _eventQueue: TelemetryEvent[]
-    private readonly newEventQueue: Datum[]
 
     public constructor(
         private readonly clientId: string,
@@ -28,15 +26,10 @@ export class DefaultTelemetryPublisher implements TelemetryPublisher {
         private telemetryClient?: TelemetryClient
     ) {
         this._eventQueue = []
-        this.newEventQueue = []
     }
 
     public enqueue(...events: TelemetryEvent[]): void {
         this._eventQueue.push(...events)
-    }
-
-    public newenqueue(...events: Datum[]): void {
-        this.newEventQueue.push(...events)
     }
 
     public get queue(): ReadonlyArray<TelemetryEvent> {
@@ -59,22 +52,6 @@ export class DefaultTelemetryPublisher implements TelemetryPublisher {
             }
 
             const failedBatch = await this.telemetryClient.postMetrics(batch)
-            if (failedBatch !== undefined) {
-                this.enqueue(...failedBatch)
-
-                // retry next time
-                return
-            }
-        }
-
-        while (this.newEventQueue.length !== 0) {
-            const batch = this.newEventQueue.splice(0, DefaultTelemetryPublisher.DEFAULT_MAX_BATCH_SIZE) as Datum[]
-
-            if (this.telemetryClient === undefined) {
-                return
-            }
-
-            const failedBatch = await this.telemetryClient.newPostMetrics(batch)
             if (failedBatch !== undefined) {
                 this.enqueue(...failedBatch)
 

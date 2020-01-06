@@ -66,12 +66,7 @@ const config = {
             PLUGINVERSION: JSON.stringify(packageJson.version)
         })
     ],
-    cache: {
-        type: 'filesystem',
-        cacheDirectory: path.resolve(__dirname, '.temp_cache')
-    },
     optimization: {
-        moduleIds: 'hashed',
         minimize: true,
         minimizer: [new TerserPlugin()]
     }

@@ -12,7 +12,6 @@ import * as ClientTelemetry from './clienttelemetry'
 import apiConfig = require('./service-2.json')
 import { TelemetryClient } from './telemetryClient'
 import { TelemetryEvent, toMetricData } from './telemetryEvent'
-import { Datum } from './telemetryTypes'
 
 export class DefaultTelemetryClient implements TelemetryClient {
     public static readonly DEFAULT_IDENTITY_POOL = 'us-east-1:820fd6d1-95c0-4ca4-bffb-3f01d32da842'
@@ -22,37 +21,6 @@ export class DefaultTelemetryClient implements TelemetryClient {
 
     private constructor(private readonly clientId: string, private readonly client: ClientTelemetry) {}
 
-    public async newPostMetrics(batch: Datum[]): Promise<Datum[] | undefined> {
-        try {
-            await this.client
-                .postMetrics({
-                    AWSProduct: DefaultTelemetryClient.PRODUCT_NAME,
-                    AWSProductVersion: pluginVersion,
-                    ClientID: this.clientId,
-                    OS: os.platform(),
-                    OSVersion: os.release(),
-                    ParentProduct: vscode.env.appName,
-                    ParentProductVersion: vscode.version,
-                    MetricData: batch.map((oldDatum: Datum) => {
-                        return {
-                            MetricName: oldDatum.name,
-                            EpochTimestamp: 0,
-                            Unit: oldDatum.unit,
-                            Value: oldDatum.value,
-                            Metadata: Array.from(oldDatum?.metadata ?? []).map(entry => {
-                                return { Key: entry[0], Value: entry[1] }
-                            })
-                        }
-                    })
-                })
-                .promise()
-            console.info(`Successfully sent a telemetry batch of ${batch.length}`)
-        } catch (err) {
-            console.error(`Batch error: ${err}`)
-
-            return batch
-        }
-    }
     /**
      * Returns failed events
      * @param batch batch of events

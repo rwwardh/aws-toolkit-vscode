@@ -4,12 +4,10 @@
  */
 
 import { TelemetryEvent } from './telemetryEvent'
-import { Datum } from './telemetryTypes'
 
 export interface TelemetryPublisher {
     init(): Promise<void>
 
     enqueue(...events: TelemetryEvent[]): any
-    newenqueue(...events: Datum[]): any
     flush(): Promise<any>
 }
