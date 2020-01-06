@@ -4,6 +4,24 @@
             "name": "runtime",
             "allowedValues": ["linux", "windows", "mac"],
             "required": true
+        },
+        {
+            "name": "lambdaruntime",
+            "allowedValues": [
+                "dotnetcore2.1",
+                "nodejs12.x",
+                "nodejs10.x",
+                "nodejs8.10",
+                "ruby2.5",
+                "java8",
+                "java11",
+                "go1.x",
+                "python3.8",
+                "python3.7",
+                "python3.6",
+                "python2.7"
+            ],
+            "required": true
         }
     ],
     "metrics": [
@@ -12,7 +30,7 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
-                "$runtime" /*,
+                "$lambdaruntime" /*,
                 {
                     "name": "optionalThing",
                     "type": "string",
