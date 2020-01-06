@@ -28,11 +28,19 @@ export enum result {
     cancelled = 'cancelled'
 }
 interface LambdaDelete {
+    // The duration of the operation in miliseconds
     duration: number
+    // The result of the operation
     result: result
+    // The time that the event took place,
     createTime?: Date
+    // Value based on unit and call type,
     value?: number
 }
+/**
+ * @param args See the LambdaDelete interface
+ * @returns Nothing
+ */
 export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.record({
         createTime: args?.createTime ?? new Date(),
@@ -50,10 +58,17 @@ export function recordLambdaDelete(args: LambdaDelete) {
     })
 }
 interface LambdaCreate {
+    // What lambda runtime was used in the operation
     lambdaruntime: lambdaruntime
+    // The time that the event took place,
     createTime?: Date
+    // Value based on unit and call type,
     value?: number
 }
+/**
+ * @param args See the LambdaCreate interface
+ * @returns Nothing
+ */
 export function recordLambdaCreate(args: LambdaCreate) {
     ext.telemetry.record({
         createTime: args?.createTime ?? new Date(),

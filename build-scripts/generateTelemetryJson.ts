@@ -14,6 +14,7 @@ interface MetadataType {
     type?: AllowedTypes
     allowedValues?: string[]
     required: boolean
+    description: string
 }
 
 type MetricMetadataType = MetadataType | string
@@ -37,7 +38,12 @@ interface MetricDefinitionRoot {
 }
 
 function globalArgs(): string[] {
-    return ['createTime?: Date', 'value?: number']
+    return [
+        '// The time that the event took place',
+        'createTime?: Date',
+        '// Value based on unit and call type',
+        'value?: number'
+    ]
 }
 
 function getArgsFromMetadata(m: MetadataType): string {
@@ -64,13 +70,6 @@ function getArgsFromMetadata(m: MetadataType): string {
     }
 
     return `${m.name}${m.required ? '' : '?'}: ${t}`
-}
-
-function generateArgs(metadata: MetadataType[]): string[] {
-    const args = metadata.map(getArgsFromMetadata)
-    args.push(...globalArgs())
-
-    return args
 }
 
 //////////
@@ -121,7 +120,7 @@ globalMetadata.forEach((metadata: MetadataType) => {
 })
 
 metrics.forEach((metric: Metric) => {
-    const metadata = metric.metadata.map(item => {
+    const metadata: MetadataType[] = metric.metadata.map(item => {
         if (typeof item === 'string') {
             const s = item as string
             if (!s.startsWith('$')) {
@@ -143,11 +142,16 @@ metrics.forEach((metric: Metric) => {
     })
 
     const name = metricToTypeName(metric)
-    const args = generateArgs(metadata)
-
     output += `interface ${name} {
-    ${args.join(',')}
+    ${metadata.map(item => `\n// ${item.description}\n${getArgsFromMetadata(item)}`).join(',')}
+    ${globalArgs().join(',\n')}
 }`
+
+    output += `\n/**
+      * @param args See the ${name} interface
+      * @returns Nothing
+      */\n`
+
     output += `export function record${name}(args${metadata.every(item => !item.required) ? '?' : ''}: ${name}) {
     ext.telemetry.record({
             createTime: args?.createTime ?? new Date(),

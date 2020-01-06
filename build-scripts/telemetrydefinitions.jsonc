@@ -16,18 +16,21 @@
                 "python3.6",
                 "python2.7"
             ],
-            "required": true
+            "required": true,
+            "description": "What lambda runtime was used in the operation"
         },
         {
             "name": "duration",
             "type": "int",
-            "required": true
+            "required": true,
+            "description": "The duration of the operation in miliseconds"
         },
         {
             "name": "result",
+            "type": "enum",
             "allowedValues": ["succeeded", "failed", "cancelled"],
             "required": true,
-            "type": "enum"
+            "description": "The result of the operation"
         }
     ],
     "metrics": [
