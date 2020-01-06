@@ -9,7 +9,6 @@ enum TelemetryType {
     LAMBDA_DELETE = 'lambda_delete',
     LAMBDA_CREATE = 'lambda_create'
 }
-
 type lambdaruntime =
     | 'dotnetcore2.1'
     | 'nodejs12.x'
@@ -23,11 +22,9 @@ type lambdaruntime =
     | 'python3.7'
     | 'python3.6'
     | 'python2.7'
-
 interface LambdaDelete {
     value?: number
 }
-
 export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.newrecord({
         name: TelemetryType.LAMBDA_DELETE,
@@ -40,7 +37,6 @@ interface LambdaCreate {
     value?: number
     lambdaruntime: lambdaruntime
 }
-
 export function recordLambdaCreate(args: LambdaCreate) {
     ext.telemetry.newrecord({
         name: TelemetryType.LAMBDA_CREATE,

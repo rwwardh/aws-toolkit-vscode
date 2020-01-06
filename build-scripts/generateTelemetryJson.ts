@@ -47,7 +47,7 @@ metrics.forEach((metric: Metric) => {
     output += `    ${metric.name.toUpperCase()} = '${metric.name}',\n`
 })
 
-output += '}\n\n'
+output += '}'
 
 globalMetadata.forEach((metadata: MetadataType) => {
     if ((metadata?.allowedValues?.length ?? 0) === 0) {
@@ -55,12 +55,8 @@ globalMetadata.forEach((metadata: MetadataType) => {
     }
     const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-    output += `type ${metadata.name} = ${values}`
-
-    output += '\n'
+    output += `type ${metadata.name} = ${values}\n`
 })
-
-output += '\n'
 
 metrics.forEach(metric => {
     const metadata = metric.metadata.map(item => {
@@ -87,33 +83,31 @@ metrics.forEach(metric => {
         .map(item => item.replace(item[0], item[0].toUpperCase()))
         .join('')
 
-    const args = metadata
-        .map((m: MetadataType) => {
-            let t = m.name
-            if ((m?.allowedValues?.length ?? 0) === 0) {
-                t = 'string'
-            }
+    const args = metadata.map((m: MetadataType) => {
+        let t = m.name
+        if ((m?.allowedValues?.length ?? 0) === 0) {
+            t = 'string'
+        }
 
-            return `${m.name}${m.required ? '' : '?'}: ${t},`
-        })
-        .join('\n    ')
+        return `${m.name}${m.required ? '' : '?'}: ${t},`
+    })
 
     output += `interface ${name} {
     value?: number
     ${args}
-}\n\n`
+}`
     output += `export function record${name}(args: ${name}) {
     ext.telemetry.newrecord(
             {
                 name: TelemetryType.${metric.name.toUpperCase()},
                 value: args.value ?? 1,
                 unit: '${metric.unit}',
-                metadata: new Map<string, string>([\n                    ${metadata
-                    .map((m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`)
-                    .join(',\n                    ')}\n                ])
+                metadata: new Map<string, string>([\n                    ${metadata.map(
+                    (m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`
+                )}])
             }
     )
-}\n`
+}`
 })
 
 writeFileSync('build-scripts/telemetry.generated.ts', output)
