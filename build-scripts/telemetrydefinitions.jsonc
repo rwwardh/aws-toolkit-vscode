@@ -34,26 +34,21 @@
         }
     ],
     "metrics": [
-        // called when deleting lambda
         {
             "name": "lambda_delete",
+            "description": "called when deleting lambdas remotely",
             "unit": "none",
             "metadata": [
                 "$duration",
                 "$result"
             ]
         },
-        // called when creating lambda
         {
             "name": "lambda_create",
+            "description": "called when creating lambdas remotely",
             "unit": "none",
             "metadata": [
-                "$lambdaruntime" /*,
-                {
-                    "name": "optionalThing",
-                    "type": "string",
-                    "required": false
-                }*/
+                "$lambdaruntime"
             ]
         }
     ]

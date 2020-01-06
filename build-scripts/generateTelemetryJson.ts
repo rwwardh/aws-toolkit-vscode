@@ -17,12 +17,11 @@ interface MetadataType {
     description: string
 }
 
-type MetricMetadataType = MetadataType | string
-
 interface Metric {
     name: string
+    description: string
     unit: MetricType
-    metadata: MetricMetadataType[]
+    metadata: string[]
 }
 
 function metricToTypeName(m: Metric): string {
@@ -121,24 +120,19 @@ globalMetadata.forEach((metadata: MetadataType) => {
 
 metrics.forEach((metric: Metric) => {
     const metadata: MetadataType[] = metric.metadata.map(item => {
-        if (typeof item === 'string') {
-            const s = item as string
-            if (!s.startsWith('$')) {
-                console.log('You have to preface your references with the sigil "$"')
-                throw undefined
-            }
-            const foundMetadata: MetadataType | undefined = globalMetadata.find(
-                (candidate: MetadataType) => candidate.name === s.substring(1)
-            )
-            if (!foundMetadata) {
-                console.log(`Metric ${metric.name} references metadata ${s.substring(1)} that is not found!`)
-                throw undefined
-            }
-
-            return foundMetadata
-        } else {
-            return item
+        if (!item.startsWith('$')) {
+            console.log('You have to preface your references with the sigil "$"')
+            throw undefined
         }
+        const foundMetadata: MetadataType | undefined = globalMetadata.find(
+            (candidate: MetadataType) => candidate.name === item.substring(1)
+        )
+        if (!foundMetadata) {
+            console.log(`Metric ${metric.name} references metadata ${item.substring(1)} that is not found!`)
+            throw undefined
+        }
+
+        return foundMetadata
     })
 
     const name = metricToTypeName(metric)
@@ -148,6 +142,7 @@ metrics.forEach((metric: Metric) => {
 }`
 
     output += `\n/**
+      * ${metric.description}
       * @param args See the ${name} interface
       * @returns Nothing
       */\n`

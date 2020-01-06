@@ -38,6 +38,7 @@ interface LambdaDelete {
     value?: number
 }
 /**
+ * called when deleting lambdas remotely
  * @param args See the LambdaDelete interface
  * @returns Nothing
  */
@@ -66,6 +67,7 @@ interface LambdaCreate {
     value?: number
 }
 /**
+ * called when creating lambdas remotely
  * @param args See the LambdaCreate interface
  * @returns Nothing
  */
