@@ -32,7 +32,7 @@ function metricToTypeName(m: Metric): string {
 }
 
 interface MetricDefinitionRoot {
-    metadataTypes: MetadataType[]
+    metadata: MetadataType[]
     metrics: Metric[]
 }
 

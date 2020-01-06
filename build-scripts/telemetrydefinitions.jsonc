@@ -1,5 +1,5 @@
 {
-    "metadataTypes": [
+    "metadata": [
         {
             "name": "lambdaruntime",
             "allowedValues": [
