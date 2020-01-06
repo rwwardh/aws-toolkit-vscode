@@ -28,10 +28,10 @@ export enum result {
     cancelled = 'cancelled'
 }
 interface LambdaDelete {
-    value?: number
     duration: number
     result: result
     createTime?: Date
+    value?: number
 }
 export function recordLambdaDelete(args: LambdaDelete) {
     ext.telemetry.record({
@@ -50,9 +50,9 @@ export function recordLambdaDelete(args: LambdaDelete) {
     })
 }
 interface LambdaCreate {
-    value?: number
     lambdaruntime: lambdaruntime
     createTime?: Date
+    value?: number
 }
 export function recordLambdaCreate(args: LambdaCreate) {
     ext.telemetry.record({

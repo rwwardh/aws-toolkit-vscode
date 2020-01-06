@@ -37,7 +37,7 @@ interface MetricDefinitionRoot {
 }
 
 function globalArgs(): string[] {
-    return ['createTime?: Date']
+    return ['createTime?: Date', 'value?: number']
 }
 
 function getArgsFromMetadata(m: MetadataType): string {
@@ -73,9 +73,19 @@ function generateArgs(metadata: MetadataType[]): string[] {
     return args
 }
 
+//////////
+//// begin
+//////////
+
 const file = readFileSync('build-scripts/telemetrydefinitions.jsonc', 'utf8')
 const errors: jsonParser.ParseError[] = []
 const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
+
+if(errors.length > 0) {
+    console.error(`Errors while trying to parse the definitions file ${errors.join('\n')}`)
+    throw undefined
+}
+
 const globalMetadata = telemetryJson.metadataTypes
 const metrics = telemetryJson.metrics
 
@@ -136,7 +146,6 @@ metrics.forEach((metric: Metric) => {
     const args = generateArgs(metadata)
 
     output += `interface ${name} {
-    value?: number
     ${args.join(',')}
 }`
     output += `export function record${name}(args${metadata.every(item => !item.required) ? '?' : ''}: ${name}) {
@@ -155,4 +164,5 @@ metrics.forEach((metric: Metric) => {
 })
 
 writeFileSync('build-scripts/telemetry.generated.ts', output)
-console.log(output)
+
+console.log('Done generating, formatting!')
