@@ -97,16 +97,17 @@ metrics.forEach(metric => {
     ${args}
 }`
     output += `export function record${name}(args: ${name}) {
-    ext.telemetry.newrecord(
-            {
+    ext.telemetry.record({
+            createTime: new Date(),
+            data: [{
                 name: TelemetryType.${metric.name.toUpperCase()},
                 value: args.value ?? 1,
                 unit: '${metric.unit}',
                 metadata: new Map<string, string>([\n                    ${metadata.map(
                     (m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`
                 )}])
-            }
-    )
+            }]
+        })
 }`
 })
 

@@ -26,11 +26,16 @@ interface LambdaDelete {
     value?: number
 }
 export function recordLambdaDelete(args: LambdaDelete) {
-    ext.telemetry.newrecord({
-        name: TelemetryType.LAMBDA_DELETE,
-        value: args.value ?? 1,
-        unit: 'none',
-        metadata: new Map<string, string>([])
+    ext.telemetry.record({
+        createTime: new Date(),
+        data: [
+            {
+                name: TelemetryType.LAMBDA_DELETE,
+                value: args.value ?? 1,
+                unit: 'none',
+                metadata: new Map<string, string>([])
+            }
+        ]
     })
 }
 interface LambdaCreate {
@@ -38,10 +43,15 @@ interface LambdaCreate {
     lambdaruntime: lambdaruntime
 }
 export function recordLambdaCreate(args: LambdaCreate) {
-    ext.telemetry.newrecord({
-        name: TelemetryType.LAMBDA_CREATE,
-        value: args.value ?? 1,
-        unit: 'none',
-        metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])
+    ext.telemetry.record({
+        createTime: new Date(),
+        data: [
+            {
+                name: TelemetryType.LAMBDA_CREATE,
+                value: args.value ?? 1,
+                unit: 'none',
+                metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])
+            }
+        ]
     })
 }
