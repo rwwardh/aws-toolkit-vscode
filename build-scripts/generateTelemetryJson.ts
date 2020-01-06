@@ -10,7 +10,6 @@ type MetricType = 'none' | 'count'
 
 interface MetadataType {
     name: string
-    alias?: string
     allowedValues?: string[]
     required: boolean
 }
@@ -28,7 +27,7 @@ interface MetricDefinitionRoot {
     metrics: Metric[]
 }
 
-const file = readFileSync('build-scripts/telemetrydefinitions.json', 'utf8')
+const file = readFileSync('build-scripts/telemetrydefinitions.jsonc', 'utf8')
 const errors: jsonParser.ParseError[] = []
 const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
 const globalMetadata = telemetryJson.metadataTypes
@@ -56,7 +55,7 @@ globalMetadata.forEach((metadata: MetadataType) => {
     }
     const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-    output += `type ${metadata.alias ?? metadata.name} = ${values}`
+    output += `type ${metadata.name} = ${values}`
 
     output += '\n'
 })

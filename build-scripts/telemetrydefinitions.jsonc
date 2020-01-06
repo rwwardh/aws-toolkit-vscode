@@ -1,8 +1,7 @@
 {
     "metadataTypes": [
         {
-            "name": "runtime",
-            "alias": "lambdaruntime",
+            "name": "lambdaruntime",
             "allowedValues": [
                 "dotnetcore2.1",
                 "nodejs12.x",
@@ -26,7 +25,7 @@
             "name": "lambda_delete",
             "unit": "none",
             "metadata": [
-                "$runtime" /*,
+                "$lambdaruntime" /*,
                 {
                     "name": "optionalThing",
                     "type": "string",
