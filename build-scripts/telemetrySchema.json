@@ -1,0 +1,64 @@
+{
+    "$id": "AWSToolkitTelemetry",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "AWS Toolkit Telemetry",
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "array",
+            "description": "Metadata used by other calls",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the metadata type"
+                    },
+                    "type": {
+                        "enum": ["int", "string", "boolean"]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "allowedValues": {
+                        "oneOf": [
+                            { "type": "array", "items": { "type": "number" } },
+                            { "type": "array", "items": { "type": "string" } }
+                        ]
+                    }
+                },
+                "required": ["name", "description"]
+            }
+        },
+        "metrics": {
+            "type": "array",
+            "description": "The person's last name.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the metadata type"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "unit": {
+                        "enum": ["Milliseconds", "Bytes", "Percent", "Count", "None"]
+                    },
+                    "metadata": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^\\$.*$"
+                        }
+                    }
+                },
+                "required": ["name", "description"]
+            }
+        }
+    }
+}

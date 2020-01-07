@@ -45,7 +45,7 @@ export function recordLambdaDelete(args: LambdaDelete) {
             {
                 name: TelemetryType.LAMBDA_DELETE,
                 value: args?.value ?? 1,
-                unit: 'none',
+                unit: 'None',
                 metadata: new Map<string, string>([
                     ['duration', args.duration?.toString() ?? ''],
                     ['result', args.result?.toString() ?? '']
@@ -74,7 +74,7 @@ export function recordLambdaCreate(args: LambdaCreate) {
             {
                 name: TelemetryType.LAMBDA_CREATE,
                 value: args?.value ?? 1,
-                unit: 'none',
+                unit: 'None',
                 metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])
             }
         ]

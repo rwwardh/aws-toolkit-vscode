@@ -36,13 +36,13 @@
         {
             "name": "lambda_delete",
             "description": "called when deleting lambdas remotely",
-            "unit": "none",
+            "unit": "None",
             "metadata": ["$duration", "$result"]
         },
         {
             "name": "lambda_create",
             "description": "called when creating lambdas remotely",
-            "unit": "none",
+            "unit": "None",
             "metadata": ["$lambdaruntime"]
         }
     ]
