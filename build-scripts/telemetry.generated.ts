@@ -22,11 +22,7 @@ export type lambdaruntime =
     | 'python3.7'
     | 'python3.6'
     | 'python2.7'
-export enum result {
-    succeeded = 'succeeded',
-    failed = 'failed',
-    cancelled = 'cancelled'
-}
+export type result = 'succeeded' | 'failed' | 'cancelled'
 interface LambdaDelete {
     // The duration of the operation in miliseconds
     duration: number

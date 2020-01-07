@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
 
-type AllowedTypes = 'string' | 'int' | 'enum'
+type AllowedTypes = 'string' | 'int' | 'boolean'
 type MetricType = 'none' | 'count'
 
 interface MetadataType {
@@ -61,6 +61,10 @@ function getArgsFromMetadata(m: MetadataType): string {
                 t = 'number'
                 break
             }
+            case 'boolean': {
+                t = 'boolean'
+                break
+            }
             default: {
                 console.log(`unkown type ${m?.type} in metadata ${m.name}`)
                 throw undefined
@@ -84,7 +88,7 @@ if (errors.length > 0) {
     throw undefined
 }
 
-const globalMetadata = telemetryJson.metadataTypes
+const globalMetadata = telemetryJson.metadata
 const metrics = telemetryJson.metrics
 
 let output = `
@@ -107,15 +111,9 @@ globalMetadata.forEach((metadata: MetadataType) => {
     if ((metadata?.allowedValues?.length ?? 0) === 0) {
         return
     }
-    if (metadata?.type === 'enum') {
-        output += `export enum ${metadata.name.replace('.', '')} { ${metadata!.allowedValues!.map(
-            (item: string) => `${item.replace('.', '')} = '${item}'`
-        )}}`
-    } else {
-        const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
+    const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-        output += `export type ${metadata.name} = ${values}\n`
-    }
+    output += `export type ${metadata.name} = ${values}\n`
 })
 
 metrics.forEach((metric: Metric) => {

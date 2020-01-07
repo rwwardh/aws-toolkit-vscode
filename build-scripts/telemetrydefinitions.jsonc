@@ -27,7 +27,6 @@
         },
         {
             "name": "result",
-            "type": "enum",
             "allowedValues": ["succeeded", "failed", "cancelled"],
             "required": true,
             "description": "The result of the operation"
