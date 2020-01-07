@@ -79,7 +79,7 @@ function getArgsFromMetadata(m: MetadataType): string {
 //// begin
 //////////
 
-const file = readFileSync('build-scripts/telemetrydefinitions.jsonc', 'utf8')
+const file = readFileSync('build-scripts/telemetrydefinitions.json', 'utf8')
 const errors: jsonParser.ParseError[] = []
 const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
 
@@ -152,7 +152,7 @@ metrics.forEach((metric: Metric) => {
                 name: TelemetryType.${metric.name.toUpperCase()},
                 value: args?.value ?? 1,
                 unit: '${metric.unit}',
-                metadata: new Map<string, string>([\n                    ${metadata.map(
+                metadata: new Map<string, string>([${metadata.map(
                     (m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`
                 )}])
             }]
