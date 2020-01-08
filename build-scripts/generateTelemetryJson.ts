@@ -75,20 +75,26 @@ function getArgsFromMetadata(m: MetadataType): string {
     return `${m.name}${m.required ? '' : '?'}: ${t}`
 }
 
+function parseInput(s: string): MetricDefinitionRoot {
+    const file = readFileSync(s, 'utf8')
+    const errors: jsonParser.ParseError[] = []
+    const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
+
+    if (errors.length > 0) {
+        console.error(`Errors while trying to parse the definitions file ${errors.join('\n')}`)
+        throw undefined
+    }
+
+    return telemetryJson
+}
+
 //////////
 //// begin
 //////////
 
-const file = readFileSync('build-scripts/telemetrydefinitions.json', 'utf8')
-const errors: jsonParser.ParseError[] = []
-const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
+const telemetryJson = parseInput('build-scripts/telemetrydefinitions.json')
 
-if (errors.length > 0) {
-    console.error(`Errors while trying to parse the definitions file ${errors.join('\n')}`)
-    throw undefined
-}
-
-const globalMetadata = telemetryJson.metadata
+const metadatum = telemetryJson.metadata
 const metrics = telemetryJson.metrics
 
 let output = `
@@ -98,22 +104,15 @@ let output = `
  */
 
 import { ext } from '../src/shared/extensionGlobals'
-
-enum TelemetryType {
 `
-metrics.forEach((metric: Metric) => {
-    output += `    ${metric.name.toUpperCase()} = '${metric.name}',\n`
-})
 
-output += '}'
-
-globalMetadata.forEach((metadata: MetadataType) => {
-    if ((metadata?.allowedValues?.length ?? 0) === 0) {
+metadatum.forEach((m: MetadataType) => {
+    if ((m?.allowedValues?.length ?? 0) === 0) {
         return
     }
-    const values = metadata!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
+    const values = m!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-    output += `export type ${metadata.name} = ${values}\n`
+    output += `export type ${m.name} = ${values}\n`
 })
 
 metrics.forEach((metric: Metric) => {
@@ -122,7 +121,7 @@ metrics.forEach((metric: Metric) => {
             console.log('You have to preface your references with the sigil "$"')
             throw undefined
         }
-        const foundMetadata: MetadataType | undefined = globalMetadata.find(
+        const foundMetadata: MetadataType | undefined = metadatum.find(
             (candidate: MetadataType) => candidate.name === item.substring(1)
         )
         if (!foundMetadata) {
@@ -149,11 +148,11 @@ metrics.forEach((metric: Metric) => {
     ext.telemetry.record({
             createTime: args?.createTime ?? new Date(),
             data: [{
-                name: TelemetryType.${metric.name.toUpperCase()},
+                name: '${metric.name}',
                 value: args?.value ?? 1,
                 unit: '${metric.unit}',
                 metadata: new Map<string, string>([${metadata.map(
-                    (m: MetadataType) => `['${m.name}', args.${m.name}?.toString() ?? '']`
+                    (item: MetadataType) => `['${item.name}', args.${item.name}?.toString() ?? '']`
                 )}])
             }]
         })

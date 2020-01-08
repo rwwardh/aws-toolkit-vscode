@@ -4,11 +4,6 @@
  */
 
 import { ext } from '../src/shared/extensionGlobals'
-
-enum TelemetryType {
-    LAMBDA_DELETE = 'lambda_delete',
-    LAMBDA_CREATE = 'lambda_create'
-}
 export type lambdaruntime =
     | 'dotnetcore2.1'
     | 'nodejs12.x'
@@ -43,7 +38,7 @@ export function recordLambdaDelete(args: LambdaDelete) {
         createTime: args?.createTime ?? new Date(),
         data: [
             {
-                name: TelemetryType.LAMBDA_DELETE,
+                name: 'lambda_delete',
                 value: args?.value ?? 1,
                 unit: 'None',
                 metadata: new Map<string, string>([
@@ -72,7 +67,7 @@ export function recordLambdaCreate(args: LambdaCreate) {
         createTime: args?.createTime ?? new Date(),
         data: [
             {
-                name: TelemetryType.LAMBDA_CREATE,
+                name: 'lambda_create',
                 value: args?.value ?? 1,
                 unit: 'None',
                 metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])

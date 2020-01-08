@@ -2,6 +2,7 @@
     "metadata": [
         {
             "name": "lambdaruntime",
+            "type": "string",
             "allowedValues": [
                 "dotnetcore2.1",
                 "nodejs12.x",
