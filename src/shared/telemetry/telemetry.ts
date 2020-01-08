@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ext } from '../src/shared/extensionGlobals'
+import { ext } from '../extensionGlobals'
 export type lambdaruntime =
     | 'dotnetcore2.1'
     | 'nodejs12.x'
@@ -39,13 +39,13 @@ export function recordLambdaDelete(args: LambdaDelete) {
         createTime: args?.createTime ?? new Date(),
         data: [
             {
-                name: 'lambda_delete',
-                value: args?.value ?? 1,
-                unit: 'None',
-                metadata: new Map<string, string>([
-                    ['duration', args.duration?.toString() ?? ''],
-                    ['result', args.result?.toString() ?? '']
-                ])
+                MetricName: 'lambda_delete',
+                Value: args?.value ?? 1,
+                Unit: 'None',
+                Metadata: [
+                    { Key: 'duration', Value: args.duration?.toString() ?? '' },
+                    { Key: 'result', Value: args.result?.toString() ?? '' }
+                ]
             }
         ]
     })
@@ -68,10 +68,10 @@ export function recordLambdaCreate(args: LambdaCreate) {
         createTime: args?.createTime ?? new Date(),
         data: [
             {
-                name: 'lambda_create',
-                value: args?.value ?? 1,
-                unit: 'None',
-                metadata: new Map<string, string>([['lambdaruntime', args.lambdaruntime?.toString() ?? '']])
+                MetricName: 'lambda_create',
+                Value: args?.value ?? 1,
+                Unit: 'None',
+                Metadata: [{ Key: 'lambdaruntime', Value: args.lambdaruntime?.toString() ?? '' }]
             }
         ]
     })
@@ -96,13 +96,13 @@ export function recordLambdaRemoteinvoke(args: LambdaRemoteinvoke) {
         createTime: args?.createTime ?? new Date(),
         data: [
             {
-                name: 'lambda_remoteinvoke',
-                value: args?.value ?? 1,
-                unit: 'None',
-                metadata: new Map<string, string>([
-                    ['lambdaruntime', args.lambdaruntime?.toString() ?? ''],
-                    ['result', args.result?.toString() ?? '']
-                ])
+                MetricName: 'lambda_remoteinvoke',
+                Value: args?.value ?? 1,
+                Unit: 'None',
+                Metadata: [
+                    { Key: 'lambdaruntime', Value: args.lambdaruntime?.toString() ?? '' },
+                    { Key: 'result', Value: args.result?.toString() ?? '' }
+                ]
             }
         ]
     })

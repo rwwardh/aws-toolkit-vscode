@@ -5,6 +5,14 @@
 
 import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
+// This is defined as a DevDependency
+// tslint:disable-next-line: no-implicit-dependencies
+import { argv } from 'yargs'
+
+interface commandLineArguments {
+    input: string
+    output: string
+}
 
 type AllowedTypes = 'string' | 'int' | 'double' | 'boolean'
 type MetricType = 'Milliseconds' | 'Bytes' | 'Percent' | 'Count' | 'None'
@@ -152,12 +160,12 @@ function generateTelemetry(telemetryJson: MetricDefinitionRoot): string {
     ext.telemetry.record({
             createTime: args?.createTime ?? new Date(),
             data: [{
-                name: '${metric.name}',
-                value: args?.value ?? 1,
-                unit: '${metric.unit}',
-                metadata: new Map<string, string>([${metadata.map(
-                    (item: MetadataType) => `['${item.name}', args.${item.name}?.toString() ?? '']`
-                )}])
+                MetricName: '${metric.name}',
+                Value: args?.value ?? 1,
+                Unit: '${metric.unit}',
+                Metadata: [${metadata.map(
+                    (item: MetadataType) => `{Key: '${item.name}', Value: args.${item.name}?.toString() ?? ''}`
+                )}]
             }]
         })
 }`
@@ -174,6 +182,23 @@ export function millisecondsSince(d: Date): number {
 `
 }
 
+function parseArguments(): commandLineArguments {
+    console.log(argv)
+    if (!argv.output) {
+        console.log("Argument 'output' required")
+        throw undefined
+    }
+    if (!argv.input) {
+        console.log("Argument 'input' required")
+        throw undefined
+    }
+
+    return {
+        input: argv.input as string,
+        output: argv.output as string
+    }
+}
+
 // Generate
 ;(() => {
     let output = `
@@ -182,14 +207,15 @@ export function millisecondsSince(d: Date): number {
      * SPDX-License-Identifier: Apache-2.0
      */
 
-    import { ext } from '../src/shared/extensionGlobals'
+    import { ext } from '../extensionGlobals'
     `
 
-    const input: MetricDefinitionRoot = parseInput('build-scripts/telemetrydefinitions.json')
+    const args = parseArguments()
+    const input: MetricDefinitionRoot = parseInput(args.input)
     output += generateTelemetry(input)
     output += generateHelperFunctions()
 
-    writeFileSync('build-scripts/telemetry.generated.ts', output)
+    writeFileSync(args.output, output)
 
     console.log('Done generating, formatting!')
 })()

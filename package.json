@@ -473,7 +473,7 @@
         "lint": "tslint --project .",
         "lintfix": "tslint --project . --fix",
         "package": "vsce package",
-        "generateTelemetry": "ts-node ./build-scripts/generateTelemetryJson.ts && npx prettier --write ./build-scripts/*.ts",
+        "generateTelemetry": "ts-node ./build-scripts/generateTelemetryJson.ts --input=build-scripts/telemetrydefinitions.json --output=src/shared/telemetry/telemetry.ts && npx prettier --write ./src/shared/telemetry/*.ts",
         "install-plugin": "vsce package -o aws-toolkit-vscode-test.vsix && code --install-extension aws-toolkit-vscode-test.vsix",
         "newChange": "ts-node ./build-scripts/newChange.ts",
         "createRelease": "ts-node ./build-scripts/createRelease.ts"
@@ -499,6 +499,7 @@
         "@types/uuid": "^3.4.4",
         "@types/vscode": "^1.31.0",
         "@types/xml2js": "^0.4.3",
+        "@types/yargs": "^15.0.0",
         "decache": "^4.4.0",
         "glob": "^7.1.4",
         "husky": "^2.3.0",
@@ -521,7 +522,8 @@
         "vscode-nls-dev": "^3.3.1",
         "vscode-test": "^1.2.3",
         "webpack": "^4.41.2",
-        "webpack-cli": "^3.3.10"
+        "webpack-cli": "^3.3.10",
+        "yargs": "^15.1.0"
     },
     "dependencies": {
         "adm-zip": "^0.4.13",
