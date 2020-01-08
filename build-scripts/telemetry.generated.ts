@@ -75,6 +75,37 @@ export function recordLambdaCreate(args: LambdaCreate) {
         ]
     })
 }
+interface LambdaRemoteinvoke {
+    // What lambda runtime was used in the operation
+    lambdaruntime?: lambdaruntime
+    // The result of the operation
+    result: result
+    // The time that the event took place,
+    createTime?: Date
+    // Value based on unit and call type,
+    value?: number
+}
+/**
+ * called when invoking lambdas remotely
+ * @param args See the LambdaRemoteinvoke interface
+ * @returns Nothing
+ */
+export function recordLambdaRemoteinvoke(args: LambdaRemoteinvoke) {
+    ext.telemetry.record({
+        createTime: args?.createTime ?? new Date(),
+        data: [
+            {
+                name: 'lambda_remoteinvoke',
+                value: args?.value ?? 1,
+                unit: 'None',
+                metadata: new Map<string, string>([
+                    ['lambdaruntime', args.lambdaruntime?.toString() ?? ''],
+                    ['result', args.result?.toString() ?? '']
+                ])
+            }
+        ]
+    })
+}
 export function millisecondsSince(d: Date): number {
     return Date.now() - Number(d)
 }

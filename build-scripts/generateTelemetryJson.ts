@@ -6,22 +6,30 @@
 import { readFileSync, writeFileSync } from 'fs-extra'
 import * as jsonParser from 'jsonc-parser'
 
-type AllowedTypes = 'string' | 'int' | 'boolean'
-type MetricType = 'none' | 'count'
+type AllowedTypes = 'string' | 'int' | 'double' | 'boolean'
+type MetricType = 'Milliseconds' | 'Bytes' | 'Percent' | 'Count' | 'None'
 
 interface MetadataType {
     name: string
     type?: AllowedTypes
-    allowedValues?: string[]
-    required: boolean
+    allowedValues?: string[] | number[]
     description: string
+}
+
+interface MetricMetadataType extends MetadataType {
+    required: boolean
+}
+
+interface MetricMetadata {
+    type: string
+    required?: boolean
 }
 
 interface Metric {
     name: string
     description: string
     unit: MetricType
-    metadata: string[]
+    metadata: MetricMetadata[]
 }
 
 function metricToTypeName(m: Metric): string {
@@ -32,7 +40,7 @@ function metricToTypeName(m: Metric): string {
 }
 
 interface MetricDefinitionRoot {
-    metadata: MetadataType[]
+    types: MetadataType[]
     metrics: Metric[]
 }
 
@@ -45,26 +53,31 @@ function globalArgs(): string[] {
     ]
 }
 
-function getArgsFromMetadata(m: MetadataType): string {
+function isNumberArray(a?: any[]): boolean {
+    if (!Array.isArray(a)) {
+        return false
+    }
+
+    return !isNaN(Number(a?.[0]))
+}
+
+function getArgsFromMetadata(m: MetricMetadataType): string {
     let t = m.name
     if ((m?.allowedValues?.length ?? 0) === 0) {
         switch (m.type) {
-            case undefined: {
+            case undefined:
                 t = 'string'
                 break
-            }
-            case 'string': {
+            case 'string':
                 t = 'string'
                 break
-            }
-            case 'int': {
+            case 'double':
+            case 'int':
                 t = 'number'
                 break
-            }
-            case 'boolean': {
+            case 'boolean':
                 t = 'boolean'
                 break
-            }
             default: {
                 console.log(`unkown type ${m?.type} in metadata ${m.name}`)
                 throw undefined
@@ -89,7 +102,7 @@ function parseInput(s: string): MetricDefinitionRoot {
 }
 
 function generateTelemetry(telemetryJson: MetricDefinitionRoot): string {
-    const metadatum = telemetryJson.metadata
+    const metadatum = telemetryJson.types
     const metrics = telemetryJson.metrics
     let str = ''
 
@@ -97,26 +110,30 @@ function generateTelemetry(telemetryJson: MetricDefinitionRoot): string {
         if ((m?.allowedValues?.length ?? 0) === 0) {
             return
         }
-        const values = m!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
+        let values: string = ''
+        if (isNumberArray(m.allowedValues)) {
+            values = (m.allowedValues as number[])!.join(' | ')
+        } else {
+            values = (m.allowedValues as string[])!.map((item: string) => `'${item}'`).join(' | ')
+        }
 
         str += `export type ${m.name} = ${values}\n`
     })
 
     metrics.forEach((metric: Metric) => {
-        const metadata: MetadataType[] = metric.metadata.map(item => {
-            if (!item.startsWith('$')) {
-                console.log('You have to preface your references with the sigil "$"')
-                throw undefined
-            }
+        const metadata: MetricMetadataType[] = metric.metadata.map((item: MetricMetadata) => {
             const foundMetadata: MetadataType | undefined = metadatum.find(
-                (candidate: MetadataType) => candidate.name === item.substring(1)
+                (candidate: MetadataType) => candidate.name === item.type
             )
             if (!foundMetadata) {
-                console.log(`Metric ${metric.name} references metadata ${item.substring(1)} that is not found!`)
+                console.log(`Metric ${metric.name} references metadata ${item.type} that is not found!`)
                 throw undefined
             }
 
-            return foundMetadata
+            return {
+                ...foundMetadata,
+                required: item.required ?? true
+            }
         })
 
         const name = metricToTypeName(metric)

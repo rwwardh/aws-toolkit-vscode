@@ -1,5 +1,5 @@
 {
-    "metadata": [
+    "types": [
         {
             "name": "lambdaruntime",
             "type": "string",
@@ -17,19 +17,16 @@
                 "python3.6",
                 "python2.7"
             ],
-            "required": true,
             "description": "What lambda runtime was used in the operation"
         },
         {
             "name": "duration",
-            "type": "int",
-            "required": true,
+            "type": "double",
             "description": "The duration of the operation in miliseconds"
         },
         {
             "name": "result",
             "allowedValues": ["succeeded", "failed", "cancelled"],
-            "required": true,
             "description": "The result of the operation"
         }
     ],
@@ -38,13 +35,19 @@
             "name": "lambda_delete",
             "description": "called when deleting lambdas remotely",
             "unit": "None",
-            "metadata": ["$duration", "$result"]
+            "metadata": [{ "type": "duration" }, { "type": "result" }]
         },
         {
             "name": "lambda_create",
             "description": "called when creating lambdas remotely",
             "unit": "None",
-            "metadata": ["$lambdaruntime"]
+            "metadata": [{ "type": "lambdaruntime" }]
+        },
+        {
+            "name": "lambda_remoteinvoke",
+            "description": "called when invoking lambdas remotely",
+            "unit": "None",
+            "metadata": [{ "type": "lambdaruntime", "required": false }, { "type": "result" }]
         }
     ]
 }
