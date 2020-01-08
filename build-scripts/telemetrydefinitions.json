@@ -32,7 +32,7 @@
         },
         {
             "name": "result",
-            "allowedValues": ["succeeded", "failed", "cancelled"],
+            "allowedValues": ["Succeeded", "Failed", "Cancelled"],
             "description": "The result of the operation"
         }
     ],

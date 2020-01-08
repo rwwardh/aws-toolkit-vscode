@@ -183,7 +183,6 @@ export function millisecondsSince(d: Date): number {
 }
 
 function parseArguments(): commandLineArguments {
-    console.log(argv)
     if (!argv.output) {
         console.log("Argument 'output' required")
         throw undefined
