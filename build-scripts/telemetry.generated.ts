@@ -17,6 +17,7 @@ export type lambdaruntime =
     | 'python3.7'
     | 'python3.6'
     | 'python2.7'
+export type zerooneortwo = 0 | 1 | 2
 export type result = 'succeeded' | 'failed' | 'cancelled'
 interface LambdaDelete {
     // The duration of the operation in miliseconds
