@@ -78,73 +78,60 @@ function getArgsFromMetadata(m: MetadataType): string {
 function parseInput(s: string): MetricDefinitionRoot {
     const file = readFileSync(s, 'utf8')
     const errors: jsonParser.ParseError[] = []
-    const telemetryJson = jsonParser.parse(file, errors) as MetricDefinitionRoot
+    const jsonOutput = jsonParser.parse(file, errors) as MetricDefinitionRoot
 
     if (errors.length > 0) {
         console.error(`Errors while trying to parse the definitions file ${errors.join('\n')}`)
         throw undefined
     }
 
-    return telemetryJson
+    return jsonOutput
 }
 
-//////////
-//// begin
-//////////
+function generateTelemetry(telemetryJson: MetricDefinitionRoot): string {
+    const metadatum = telemetryJson.metadata
+    const metrics = telemetryJson.metrics
+    let str = ''
 
-const telemetryJson = parseInput('build-scripts/telemetrydefinitions.json')
-
-const metadatum = telemetryJson.metadata
-const metrics = telemetryJson.metrics
-
-let output = `
-/*!
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { ext } from '../src/shared/extensionGlobals'
-`
-
-metadatum.forEach((m: MetadataType) => {
-    if ((m?.allowedValues?.length ?? 0) === 0) {
-        return
-    }
-    const values = m!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
-
-    output += `export type ${m.name} = ${values}\n`
-})
-
-metrics.forEach((metric: Metric) => {
-    const metadata: MetadataType[] = metric.metadata.map(item => {
-        if (!item.startsWith('$')) {
-            console.log('You have to preface your references with the sigil "$"')
-            throw undefined
+    metadatum.forEach((m: MetadataType) => {
+        if ((m?.allowedValues?.length ?? 0) === 0) {
+            return
         }
-        const foundMetadata: MetadataType | undefined = metadatum.find(
-            (candidate: MetadataType) => candidate.name === item.substring(1)
-        )
-        if (!foundMetadata) {
-            console.log(`Metric ${metric.name} references metadata ${item.substring(1)} that is not found!`)
-            throw undefined
-        }
+        const values = m!.allowedValues!.map((item: string) => `'${item}'`).join(' | ')
 
-        return foundMetadata
+        str += `export type ${m.name} = ${values}\n`
     })
 
-    const name = metricToTypeName(metric)
-    output += `interface ${name} {
+    metrics.forEach((metric: Metric) => {
+        const metadata: MetadataType[] = metric.metadata.map(item => {
+            if (!item.startsWith('$')) {
+                console.log('You have to preface your references with the sigil "$"')
+                throw undefined
+            }
+            const foundMetadata: MetadataType | undefined = metadatum.find(
+                (candidate: MetadataType) => candidate.name === item.substring(1)
+            )
+            if (!foundMetadata) {
+                console.log(`Metric ${metric.name} references metadata ${item.substring(1)} that is not found!`)
+                throw undefined
+            }
+
+            return foundMetadata
+        })
+
+        const name = metricToTypeName(metric)
+        str += `interface ${name} {
     ${metadata.map(item => `\n// ${item.description}\n${getArgsFromMetadata(item)}`).join(',')}
     ${globalArgs().join(',\n')}
 }`
 
-    output += `\n/**
+        str += `\n/**
       * ${metric.description}
       * @param args See the ${name} interface
       * @returns Nothing
       */\n`
 
-    output += `export function record${name}(args${metadata.every(item => !item.required) ? '?' : ''}: ${name}) {
+        str += `export function record${name}(args${metadata.every(item => !item.required) ? '?' : ''}: ${name}) {
     ext.telemetry.record({
             createTime: args?.createTime ?? new Date(),
             data: [{
@@ -157,14 +144,35 @@ metrics.forEach((metric: Metric) => {
             }]
         })
 }`
-})
+    })
 
-output += `
+    return str
+}
+
+function generateHelperFunctions(): string {
+    return `
 export function millisecondsSince(d: Date): number {
     return Date.now() - Number(d)
 }
 `
+}
 
-writeFileSync('build-scripts/telemetry.generated.ts', output)
+// Generate
+;(() => {
+    let output = `
+    /*!
+     * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+     * SPDX-License-Identifier: Apache-2.0
+     */
 
-console.log('Done generating, formatting!')
+    import { ext } from '../src/shared/extensionGlobals'
+    `
+
+    const input: MetricDefinitionRoot = parseInput('build-scripts/telemetrydefinitions.json')
+    output += generateTelemetry(input)
+    output += generateHelperFunctions()
+
+    writeFileSync('build-scripts/telemetry.generated.ts', output)
+
+    console.log('Done generating, formatting!')
+})()
