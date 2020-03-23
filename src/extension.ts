@@ -179,6 +179,8 @@ export async function activate(context: vscode.ExtensionContext) {
             toolkitSettings
         })
 
+        vscode.debug.registerDebugConfigurationProvider('sampleDebug', new XDebugConfigProvider())
+
         toastNewUser(context)
 
         await loginWithMostRecentCredentials(toolkitSettings, loginManager)
@@ -247,3 +249,15 @@ function makeEndpointsProvider(): EndpointsProvider {
 // Unique extension entrypoint names, so that they can be obtained from the webpack bundle
 export const awsToolkitActivate = activate
 export const awsToolkitDeactivate = deactivate
+
+class XDebugConfigProvider implements vscode.DebugConfigurationProvider {
+    public async resolveDebugConfiguration(
+        folder: vscode.WorkspaceFolder | undefined,
+        debugConfiguration: vscode.DebugConfiguration,
+        token?: vscode.CancellationToken
+    ): Promise<vscode.DebugConfiguration | undefined> {
+        console.log(`HELLO FROM ${JSON.stringify(debugConfiguration, undefined, 4)}`)
+
+        return undefined
+    }
+}

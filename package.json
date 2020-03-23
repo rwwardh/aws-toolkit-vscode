@@ -54,6 +54,40 @@
     ],
     "main": "./extensionMain",
     "contributes": {
+        "debuggers": [
+            {
+                "type": "sampleDebug",
+                "label": "zzz heres mah debugger zzz",
+                "configurationAttributes": {
+                    "bees": {
+                        "properties": {
+                            "beans": {
+                                "type": "number",
+                                "description": "magical",
+                                "default": 123
+                            },
+                            "hats": {
+                                "type": "string",
+                                "description": "up top"
+                            }
+                        }
+                    },
+                    "birds": {
+                        "properties": {
+                            "beans": {
+                                "type": "number",
+                                "description": "magical",
+                                "default": 123
+                            },
+                            "blocks": {
+                                "type": "string",
+                                "description": "urban unit of distance"
+                            }
+                        }
+                    }
+                }
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "%AWS.configuration.title%",
