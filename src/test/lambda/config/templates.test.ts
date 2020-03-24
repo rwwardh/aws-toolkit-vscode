@@ -4,19 +4,19 @@
  */
 
 import * as assert from 'assert'
+import { writeFile } from 'fs-extra'
 import * as path from 'path'
 import * as vscode from 'vscode'
 import {
+    getExistingConfiguration,
     getTemplatesConfigPath,
     load,
     LoadTemplatesConfigContext,
-    TemplatesConfigPopulator,
-    getExistingConfiguration
+    TemplatesConfigPopulator
 } from '../../../lambda/config/templates'
-import { rmrf, mkdir } from '../../../shared/filesystem'
-import { makeTemporaryToolkitFolder } from '../../../shared/filesystemUtilities'
 import { CloudFormationTemplateRegistry } from '../../../shared/cloudformation/templateRegistry'
-import { writeFile } from 'fs-extra'
+import { mkdir, rmrf } from '../../../shared/filesystem'
+import { makeTemporaryToolkitFolder } from '../../../shared/filesystemUtilities'
 import { makeSampleSamTemplateYaml } from '../../shared/cloudformation/cloudformationTestUtils'
 
 class MockLoadTemplatesConfigContext {
