@@ -10,9 +10,13 @@ const localize = nls.loadMessageBundle()
 
 import { samLambdaRuntimes } from '../../../lambda/models/samLambdaRuntime'
 import { CloudFormation } from '../../cloudformation/cloudformation'
-import { CloudFormationTemplateRegistry } from '../../cloudformation/templateRegistry'
+import { CloudFormationTemplateRegistry, TemplateData } from '../../cloudformation/templateRegistry'
 import { isContainedWithinDirectory } from '../../filesystemUtilities'
-import { AwsSamDebuggerConfiguration, AwsSamDebuggerInvokeTargetTemplateFields } from './awsSamDebugConfiguration'
+import {
+    AwsSamDebuggerConfiguration,
+    AwsSamDebuggerInvokeTargetTemplateFields,
+    ReadonlyJsonObject
+} from './awsSamDebugConfiguration'
 
 export const AWS_SAM_DEBUG_TYPE = 'aws-sam'
 export const DIRECT_INVOKE_TYPE = 'direct-invoke'
@@ -35,15 +39,12 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
             const templates = this.cftRegistry.registeredTemplates
 
             for (const templateDatum of templates) {
-                if (isContainedWithinDirectory(folderPath, templateDatum.path) && templateDatum.template.Resources) {
-                    for (const resourceKey of Object.keys(templateDatum.template.Resources)) {
-                        const resource = templateDatum.template.Resources[resourceKey]
-                        if (resource) {
-                            debugConfigurations.push(
-                                createDirectInvokeSamDebugConfigurationFromTemplate(resourceKey, templateDatum.path)
-                            )
-                        }
-                    }
+                if (isContainedWithinDirectory(folderPath, templateDatum.path)) {
+                    parseCloudFormationResourcesFromTemplate(templateDatum, (resourceKey, resource) => {
+                        debugConfigurations.push(
+                            createDirectInvokeSamDebugConfigurationFromTemplate(resourceKey, templateDatum.path)
+                        )
+                    })
                 }
             }
 
@@ -88,11 +89,33 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
     }
 }
 
-function createDirectInvokeSamDebugConfigurationFromTemplate(
+export function parseCloudFormationResourcesFromTemplate(
+    templateDatum: TemplateData,
+    callback: (resourceKey: string, resource: CloudFormation.Resource) => void
+): void {
+    if (templateDatum.template.Resources) {
+        for (const resourceKey of Object.keys(templateDatum.template.Resources)) {
+            const resource = templateDatum.template.Resources[resourceKey]
+            if (resource) {
+                callback(resourceKey, resource)
+            }
+        }
+    }
+}
+
+export interface AdditionalDebuggerFields {
+    eventJson?: ReadonlyJsonObject
+    environmentVariables?: ReadonlyJsonObject
+    dockerNetwork?: string
+    useContainer?: boolean
+}
+
+export function createDirectInvokeSamDebugConfigurationFromTemplate(
     resourceName: string,
-    templatePath: string
+    templatePath: string,
+    additionalFields?: AdditionalDebuggerFields
 ): AwsSamDebuggerConfiguration {
-    return {
+    let response: AwsSamDebuggerConfiguration = {
         type: AWS_SAM_DEBUG_TYPE,
         request: DIRECT_INVOKE_TYPE,
         name: resourceName,
@@ -102,6 +125,24 @@ function createDirectInvokeSamDebugConfigurationFromTemplate(
             samTemplateResource: resourceName
         }
     }
+
+    if (additionalFields) {
+        response = {
+            ...response,
+            lambda: {
+                event: {
+                    json: additionalFields.eventJson
+                },
+                environmentVariables: additionalFields.environmentVariables
+            },
+            sam: {
+                dockerNetwork: additionalFields.dockerNetwork,
+                containerBuild: additionalFields.useContainer
+            }
+        }
+    }
+
+    return response
 }
 
 function generalDebugConfigValidation(

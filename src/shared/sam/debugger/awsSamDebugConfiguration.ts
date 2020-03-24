@@ -12,7 +12,7 @@ export interface AwsSamDebuggerConfiguration extends vscode.DebugConfiguration {
     readonly aws?: AwsSamDebuggerAwsFields
 }
 
-interface ReadonlyJsonObject {
+export interface ReadonlyJsonObject {
     readonly [key: string]: string | number | boolean
 }
 

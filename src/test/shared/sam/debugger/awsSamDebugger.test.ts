@@ -8,14 +8,16 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 
 import { nodeJsRuntimes } from '../../../../lambda/models/samLambdaRuntime'
-import { CloudFormationTemplateRegistry } from '../../../../shared/cloudformation/templateRegistry'
+import { CloudFormationTemplateRegistry, TemplateData } from '../../../../shared/cloudformation/templateRegistry'
 import { mkdir, rmrf } from '../../../../shared/filesystem'
 import { makeTemporaryToolkitFolder } from '../../../../shared/filesystemUtilities'
 import {
     AWS_SAM_DEBUG_TYPE,
     AwsSamDebugConfigurationProvider,
     CODE_TARGET_TYPE,
+    createDirectInvokeSamDebugConfigurationFromTemplate,
     DIRECT_INVOKE_TYPE,
+    parseCloudFormationResourcesFromTemplate,
     TEMPLATE_TARGET_TYPE
 } from '../../../../shared/sam/debugger/awsSamDebugger'
 import {
@@ -291,5 +293,87 @@ describe('AwsSamDebugConfigurationProvider', async () => {
                 undefined
             )
         })
+    })
+})
+
+describe('parseCloudFormationResourcesFromTemplate', () => {
+    const templateDatum: TemplateData = {
+        path: path.join('the', 'path', 'led', 'us', 'here', 'today'),
+        template: {
+            Resources: {
+                resource1: {
+                    Type: 'AWS::Serverless::Function',
+                    Properties: {
+                        Handler: 'tooHotTo.handler',
+                        CodeUri: 'rightHere'
+                    }
+                }
+            }
+        }
+    }
+
+    it('calls a callback for a single resource', () => {
+        let count = 0
+        parseCloudFormationResourcesFromTemplate(templateDatum, (resourceKey, resource) => {
+            assert.strictEqual(resourceKey, 'resource1')
+            assert.deepStrictEqual(resource, templateDatum.template.Resources!.resource1)
+            count++
+        })
+        assert.strictEqual(count, 1)
+    })
+
+    it('calls a callback per resource, if the resource exists', () => {
+        let count = 0
+        const biggerDatum: TemplateData = {
+            ...templateDatum,
+            template: {
+                Resources: {
+                    ...templateDatum.template.Resources,
+                    resource2: {
+                        Type: 'AWS::Serverless::Function',
+                        Properties: {
+                            Handler: 'handledWith.care',
+                            CodeUri: 'overThere'
+                        }
+                    },
+                    undefinedResource: undefined
+                }
+            }
+        }
+        parseCloudFormationResourcesFromTemplate(biggerDatum, () => {
+            count++
+        })
+        assert.strictEqual(count, 2)
+    })
+})
+
+describe('createDirectInvokeSamDebugConfigurationFromTemplate', () => {
+    const name = 'my body is a template'
+    const templatePath = path.join('two', 'roads', 'diverged', 'in', 'a', 'yellow', 'wood')
+
+    it('creates a template-type SAM debugger configuration with minimal configurations', () => {
+        const config = createDirectInvokeSamDebugConfigurationFromTemplate(name, templatePath)
+        assert.strictEqual(config.invokeTarget.target, TEMPLATE_TARGET_TYPE)
+        assert.strictEqual(config.name, name)
+        assert.strictEqual(config.invokeTarget.samTemplateResource, name)
+        assert.strictEqual(config.invokeTarget.samTemplatePath, templatePath)
+        assert.ok(!config.hasOwnProperty('lambda'))
+    })
+
+    it('creates a template-type SAM debugger configuration with additional params', () => {
+        const params = {
+            eventJson: {
+                event: 'uneventufl'
+            },
+            environmentVariables: {
+                varial: 'invert to fakie'
+            },
+            dockerNetwork: 'rockerFretwork'
+        }
+        const config = createDirectInvokeSamDebugConfigurationFromTemplate(name, templatePath, params)
+        assert.deepStrictEqual(config.lambda?.event?.json, params.eventJson)
+        assert.deepStrictEqual(config.lambda?.environmentVariables, params.environmentVariables)
+        assert.strictEqual(config.sam?.dockerNetwork, params.dockerNetwork)
+        assert.strictEqual(config.sam?.containerBuild, undefined)
     })
 })
