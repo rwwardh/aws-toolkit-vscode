@@ -11,6 +11,7 @@ import { nodeJsRuntimes } from '../../../../lambda/models/samLambdaRuntime'
 import { CloudFormationTemplateRegistry, TemplateData } from '../../../../shared/cloudformation/templateRegistry'
 import { mkdir, rmrf } from '../../../../shared/filesystem'
 import { makeTemporaryToolkitFolder } from '../../../../shared/filesystemUtilities'
+import { TemplateTargetProperties } from '../../../../shared/sam/debugger/awsSamDebugConfiguration'
 import {
     AWS_SAM_DEBUG_TYPE,
     AwsSamDebugConfigurationProvider,
@@ -355,9 +356,10 @@ describe('createDirectInvokeSamDebugConfigurationFromTemplate', () => {
     it('creates a template-type SAM debugger configuration with minimal configurations', () => {
         const config = createDirectInvokeSamDebugConfigurationFromTemplate(name, templatePath)
         assert.strictEqual(config.invokeTarget.target, TEMPLATE_TARGET_TYPE)
+        const invokeTarget = config.invokeTarget as TemplateTargetProperties
         assert.strictEqual(config.name, name)
-        assert.strictEqual(config.invokeTarget.samTemplateResource, name)
-        assert.strictEqual(config.invokeTarget.samTemplatePath, templatePath)
+        assert.strictEqual(invokeTarget.samTemplateResource, name)
+        assert.strictEqual(invokeTarget.samTemplatePath, templatePath)
         assert.ok(!config.hasOwnProperty('lambda'))
     })
 
