@@ -12,8 +12,7 @@ import { samLambdaRuntimes } from '../../../lambda/models/samLambdaRuntime'
 import { CloudFormation } from '../../cloudformation/cloudformation'
 import { CloudFormationTemplateRegistry, TemplateData } from '../../cloudformation/templateRegistry'
 import { isContainedWithinDirectory } from '../../filesystemUtilities'
-import { AwsSamDebuggerInvokeTargetTemplateFields } from './awsSamDebugConfiguration'
-import { AwsSamDebuggerConfiguration, ReadonlyJsonObject } from './awsSamDebugConfiguration.gen'
+import { AwsSamDebuggerConfiguration, ReadonlyJsonObject, TemplateTargetProperties } from './awsSamDebugConfiguration'
 
 export const AWS_SAM_DEBUG_TYPE = 'aws-sam'
 export const DIRECT_INVOKE_TYPE = 'direct-invoke'
@@ -174,7 +173,7 @@ function templateDebugConfigValidation(
     debugConfiguration: AwsSamDebuggerConfiguration,
     cftRegistry: CloudFormationTemplateRegistry
 ): { isValid: boolean; message?: string } {
-    const templateTarget = (debugConfiguration.invokeTarget as any) as AwsSamDebuggerInvokeTargetTemplateFields
+    const templateTarget = debugConfiguration.invokeTarget as TemplateTargetProperties
 
     const template = cftRegistry.getRegisteredTemplate(templateTarget.samTemplatePath)
 
