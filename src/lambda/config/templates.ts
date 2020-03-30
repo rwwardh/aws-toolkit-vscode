@@ -15,10 +15,8 @@ import { CloudFormationTemplateRegistry } from '../../shared/cloudformation/temp
 import { mkdir } from '../../shared/filesystem'
 import * as fsUtils from '../../shared/filesystemUtilities'
 import { getLogger, Logger } from '../../shared/logger'
-import {
-    AdditionalDebuggerFields,
-    parseCloudFormationResourcesFromTemplate
-} from '../../shared/sam/debugger/awsSamDebugger'
+import { ReadonlyJsonObject } from '../../shared/sam/debugger/awsSamDebugConfiguration'
+import { parseCloudFormationResourcesFromTemplate } from '../../shared/sam/debugger/awsSamDebugger'
 import { getTabSizeSetting } from '../../shared/utilities/editorUtilities'
 import { getNormalizedRelativePath } from '../../shared/utilities/pathUtils'
 import { saveDocumentIfDirty } from '../../shared/utilities/textDocumentUtilities'
@@ -415,7 +413,15 @@ export async function getExistingConfiguration(
     handler: string,
     samTemplate: vscode.Uri,
     registry: CloudFormationTemplateRegistry = CloudFormationTemplateRegistry.getRegistry()
-): Promise<AdditionalDebuggerFields | undefined> {
+): Promise<
+    | {
+          eventJson?: ReadonlyJsonObject
+          environmentVariables?: ReadonlyJsonObject
+          dockerNetwork?: string
+          useContainer?: boolean
+      }
+    | undefined
+> {
     const configPath: string = getTemplatesConfigPath(workspaceFolder.uri.fsPath)
 
     if (await fsUtils.fileExists(configPath)) {
