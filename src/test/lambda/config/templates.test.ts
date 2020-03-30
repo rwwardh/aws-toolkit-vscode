@@ -834,9 +834,14 @@ describe('getExistingConfiguration', async () => {
         await writeFile(tempConfigFile, JSON.stringify(configData), 'utf8')
         await registry.addTemplateToRegistry(tempTemplateFile)
         const val = await getExistingConfiguration(fakeWorkspaceFolder, matchedHandler, tempTemplateFile, registry)
-        assert.deepStrictEqual(val?.environmentVariables, {})
-        assert.deepStrictEqual(val?.eventJson, { asdf: 'asdf' })
-        assert.strictEqual(val?.dockerNetwork, undefined)
-        assert.strictEqual(val?.useContainer, false)
+        assert.ok(val)
+        if (val) {
+            // tslint:disable: no-unsafe-any
+            assert.deepStrictEqual(val.environmentVariables, {})
+            assert.deepStrictEqual(val.eventJson, { asdf: 'asdf' })
+            assert.strictEqual(val.dockerNetwork, undefined)
+            assert.strictEqual(val.useContainer, false)
+            // tslint:enable: no-unsafe-any
+        }
     })
 })
