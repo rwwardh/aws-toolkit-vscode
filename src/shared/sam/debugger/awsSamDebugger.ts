@@ -99,17 +99,15 @@ export function parseCloudFormationResourcesFromTemplate(
     }
 }
 
-export interface AdditionalDebuggerFields {
-    eventJson?: ReadonlyJsonObject
-    environmentVariables?: ReadonlyJsonObject
-    dockerNetwork?: string
-    useContainer?: boolean
-}
-
 export function createDirectInvokeSamDebugConfigurationFromTemplate(
     resourceName: string,
     templatePath: string,
-    additionalFields?: AdditionalDebuggerFields
+    additionalFields?: {
+        eventJson?: ReadonlyJsonObject
+        environmentVariables?: ReadonlyJsonObject
+        dockerNetwork?: string
+        useContainer?: boolean
+    }
 ): AwsSamDebuggerConfiguration {
     let response: AwsSamDebuggerConfiguration = {
         type: AWS_SAM_DEBUG_TYPE,
