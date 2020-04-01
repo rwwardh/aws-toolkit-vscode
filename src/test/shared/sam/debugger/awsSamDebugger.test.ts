@@ -298,7 +298,7 @@ describe('AwsSamDebugConfigurationProvider', async () => {
     })
 })
 
-describe('parseCloudFormationResourcesFromTemplate', () => {
+describe('parseCloudFormationResources', () => {
     const templateDatum: TemplateData = {
         path: path.join('the', 'path', 'led', 'us', 'here', 'today'),
         template: {
@@ -349,7 +349,7 @@ describe('parseCloudFormationResourcesFromTemplate', () => {
     })
 })
 
-describe('createDirectInvokeSamDebugConfigurationFromTemplate', () => {
+describe('createDirectInvokeSamDebugConfiguration', () => {
     const name = 'my body is a template'
     const templatePath = path.join('two', 'roads', 'diverged', 'in', 'a', 'yellow', 'wood')
 
