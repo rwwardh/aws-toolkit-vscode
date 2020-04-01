@@ -836,12 +836,10 @@ describe('getExistingConfiguration', async () => {
         const val = await getExistingConfiguration(fakeWorkspaceFolder, matchedHandler, tempTemplateFile, registry)
         assert.ok(val)
         if (val) {
-            // tslint:disable: no-unsafe-any
             assert.deepStrictEqual(val.environmentVariables, {})
             assert.deepStrictEqual(val.eventJson, { asdf: 'asdf' })
             assert.strictEqual(val.dockerNetwork, undefined)
             assert.strictEqual(val.useContainer, false)
-            // tslint:enable: no-unsafe-any
         }
     })
 })
