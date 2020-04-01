@@ -16,7 +16,7 @@ import { mkdir } from '../../shared/filesystem'
 import * as fsUtils from '../../shared/filesystemUtilities'
 import { getLogger, Logger } from '../../shared/logger'
 import { ReadonlyJsonObject } from '../../shared/sam/debugger/awsSamDebugConfiguration'
-import { parseCloudFormationResourcesFromTemplate } from '../../shared/sam/debugger/awsSamDebugger'
+import { parseCloudFormationResources } from '../../shared/sam/debugger/awsSamDebugger'
 import { getTabSizeSetting } from '../../shared/utilities/editorUtilities'
 import { getNormalizedRelativePath } from '../../shared/utilities/pathUtils'
 import { saveDocumentIfDirty } from '../../shared/utilities/textDocumentUtilities'
@@ -425,9 +425,9 @@ export async function getExistingConfiguration(
     const configPath: string = getTemplatesConfigPath(workspaceFolder.uri.fsPath)
 
     if (await fsUtils.fileExists(configPath)) {
-        let foundHandler: boolean = false
+        let foundHandler = false
         for (const templateDatum of registry.registeredTemplates) {
-            parseCloudFormationResourcesFromTemplate(templateDatum, (resourceKey, resource) => {
+            parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
                 if (resource.Properties?.Handler === handler) {
                     foundHandler = true
                 }
@@ -436,27 +436,27 @@ export async function getExistingConfiguration(
                 break
             }
         }
-        if (foundHandler) {
-            try {
-                const templateRelativePath = getNormalizedRelativePath(workspaceFolder.uri.fsPath, samTemplate.fsPath)
-                const json = JSON.parse(await fsUtils.readFileAsString(configPath)) as TemplatesConfig
-                if (
-                    json.templates[templateRelativePath]?.handlers &&
-                    json.templates[templateRelativePath]!.handlers![handler]
-                ) {
-                    const handlerData = json.templates[templateRelativePath]?.handlers![handler]!
-
-                    return {
-                        eventJson: handlerData.event,
-                        environmentVariables: handlerData.environmentVariables,
-                        dockerNetwork: handlerData.dockerNetwork,
-                        useContainer: handlerData.useContainer
-                    }
+        if (!foundHandler) {
+            return undefined
+        }
+        const templateRelativePath = getNormalizedRelativePath(workspaceFolder.uri.fsPath, samTemplate.fsPath)
+        try {
+            const json = JSON.parse(await fsUtils.readFileAsString(configPath)) as TemplatesConfig
+            const handlerData = json.templates[templateRelativePath]?.handlers?.[handler]
+            if (handlerData) {
+                return {
+                    eventJson: handlerData.event,
+                    environmentVariables: handlerData.environmentVariables,
+                    dockerNetwork: handlerData.dockerNetwork,
+                    useContainer: handlerData.useContainer
                 }
-            } catch (e) {
-                // json was not parseable
-                return undefined
             }
+        } catch (e) {
+            // json was not parseable
+            const err = e as Error
+            getLogger().info(`Error parsing the legacy configuration file: ${err.message}`)
+
+            return undefined
         }
     }
 

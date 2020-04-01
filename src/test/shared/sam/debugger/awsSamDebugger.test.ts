@@ -16,9 +16,9 @@ import {
     AWS_SAM_DEBUG_TYPE,
     AwsSamDebugConfigurationProvider,
     CODE_TARGET_TYPE,
-    createDirectInvokeSamDebugConfigurationFromTemplate,
+    createDirectInvokeSamDebugConfiguration,
     DIRECT_INVOKE_TYPE,
-    parseCloudFormationResourcesFromTemplate,
+    parseCloudFormationResources,
     TEMPLATE_TARGET_TYPE
 } from '../../../../shared/sam/debugger/awsSamDebugger'
 import {
@@ -316,7 +316,7 @@ describe('parseCloudFormationResourcesFromTemplate', () => {
 
     it('calls a callback for a single resource', () => {
         let count = 0
-        parseCloudFormationResourcesFromTemplate(templateDatum, (resourceKey, resource) => {
+        parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
             assert.strictEqual(resourceKey, 'resource1')
             assert.deepStrictEqual(resource, templateDatum.template.Resources!.resource1)
             count++
@@ -342,7 +342,7 @@ describe('parseCloudFormationResourcesFromTemplate', () => {
                 }
             }
         }
-        parseCloudFormationResourcesFromTemplate(biggerDatum, () => {
+        parseCloudFormationResources(biggerDatum, () => {
             count++
         })
         assert.strictEqual(count, 2)
@@ -354,7 +354,7 @@ describe('createDirectInvokeSamDebugConfigurationFromTemplate', () => {
     const templatePath = path.join('two', 'roads', 'diverged', 'in', 'a', 'yellow', 'wood')
 
     it('creates a template-type SAM debugger configuration with minimal configurations', () => {
-        const config = createDirectInvokeSamDebugConfigurationFromTemplate(name, templatePath)
+        const config = createDirectInvokeSamDebugConfiguration(name, templatePath)
         assert.strictEqual(config.invokeTarget.target, TEMPLATE_TARGET_TYPE)
         const invokeTarget = config.invokeTarget as TemplateTargetProperties
         assert.strictEqual(config.name, name)
@@ -373,7 +373,7 @@ describe('createDirectInvokeSamDebugConfigurationFromTemplate', () => {
             },
             dockerNetwork: 'rockerFretwork'
         }
-        const config = createDirectInvokeSamDebugConfigurationFromTemplate(name, templatePath, params)
+        const config = createDirectInvokeSamDebugConfiguration(name, templatePath, params)
         assert.deepStrictEqual(config.lambda?.event?.json, params.eventJson)
         assert.deepStrictEqual(config.lambda?.environmentVariables, params.environmentVariables)
         assert.strictEqual(config.sam?.dockerNetwork, params.dockerNetwork)

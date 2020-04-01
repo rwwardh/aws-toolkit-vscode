@@ -36,9 +36,9 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
 
             for (const templateDatum of templates) {
                 if (isContainedWithinDirectory(folderPath, templateDatum.path)) {
-                    parseCloudFormationResourcesFromTemplate(templateDatum, (resourceKey, resource) => {
+                    parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
                         debugConfigurations.push(
-                            createDirectInvokeSamDebugConfigurationFromTemplate(resourceKey, templateDatum.path)
+                            createDirectInvokeSamDebugConfiguration(resourceKey, templateDatum.path)
                         )
                     })
                 }
@@ -85,7 +85,7 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
     }
 }
 
-export function parseCloudFormationResourcesFromTemplate(
+export function parseCloudFormationResources(
     templateDatum: TemplateData,
     callback: (resourceKey: string, resource: CloudFormation.Resource) => void
 ): void {
@@ -99,7 +99,7 @@ export function parseCloudFormationResourcesFromTemplate(
     }
 }
 
-export function createDirectInvokeSamDebugConfigurationFromTemplate(
+export function createDirectInvokeSamDebugConfiguration(
     resourceName: string,
     templatePath: string,
     additionalFields?: {
