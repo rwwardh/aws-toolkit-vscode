@@ -10,7 +10,7 @@ const localize = nls.loadMessageBundle()
 
 import { samLambdaRuntimes } from '../../../lambda/models/samLambdaRuntime'
 import { CloudFormation } from '../../cloudformation/cloudformation'
-import { CloudFormationTemplateRegistry, TemplateData } from '../../cloudformation/templateRegistry'
+import { CloudFormationTemplateRegistry, getResourcesFromTemplateDatum } from '../../cloudformation/templateRegistry'
 import { isContainedWithinDirectory } from '../../filesystemUtilities'
 import { AwsSamDebuggerConfiguration, ReadonlyJsonObject, TemplateTargetProperties } from './awsSamDebugConfiguration'
 
@@ -36,11 +36,12 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
 
             for (const templateDatum of templates) {
                 if (isContainedWithinDirectory(folderPath, templateDatum.path)) {
-                    parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
+                    const resources = getResourcesFromTemplateDatum(templateDatum)
+                    for (const resourceKey of resources.keys()) {
                         debugConfigurations.push(
                             createDirectInvokeSamDebugConfiguration(resourceKey, templateDatum.path)
                         )
-                    })
+                    }
                 }
             }
 
@@ -82,20 +83,6 @@ export class AwsSamDebugConfigurationProvider implements vscode.DebugConfigurati
         vscode.window.showInformationMessage(localize('AWS.generic.notImplemented', 'Not implemented'))
 
         return undefined
-    }
-}
-
-export function parseCloudFormationResources(
-    templateDatum: TemplateData,
-    callback: (resourceKey: string, resource: CloudFormation.Resource) => void
-): void {
-    if (templateDatum.template.Resources) {
-        for (const resourceKey of Object.keys(templateDatum.template.Resources)) {
-            const resource = templateDatum.template.Resources[resourceKey]
-            if (resource) {
-                callback(resourceKey, resource)
-            }
-        }
     }
 }
 

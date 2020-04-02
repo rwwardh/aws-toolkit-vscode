@@ -16,7 +16,6 @@ import { mkdir } from '../../shared/filesystem'
 import * as fsUtils from '../../shared/filesystemUtilities'
 import { getLogger, Logger } from '../../shared/logger'
 import { ReadonlyJsonObject } from '../../shared/sam/debugger/awsSamDebugConfiguration'
-import { parseCloudFormationResources } from '../../shared/sam/debugger/awsSamDebugger'
 import { getTabSizeSetting } from '../../shared/utilities/editorUtilities'
 import { getNormalizedRelativePath } from '../../shared/utilities/pathUtils'
 import { saveDocumentIfDirty } from '../../shared/utilities/textDocumentUtilities'
@@ -425,20 +424,6 @@ export async function getExistingConfiguration(
     const configPath: string = getTemplatesConfigPath(workspaceFolder.uri.fsPath)
 
     if (await fsUtils.fileExists(configPath)) {
-        let foundHandler = false
-        for (const templateDatum of registry.registeredTemplates) {
-            parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
-                if (resource.Properties?.Handler === handler) {
-                    foundHandler = true
-                }
-            })
-            if (foundHandler) {
-                break
-            }
-        }
-        if (!foundHandler) {
-            return undefined
-        }
         const templateRelativePath = getNormalizedRelativePath(workspaceFolder.uri.fsPath, samTemplate.fsPath)
         try {
             const json = JSON.parse(await fsUtils.readFileAsString(configPath)) as TemplatesConfig

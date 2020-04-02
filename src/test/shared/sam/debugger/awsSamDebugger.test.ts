@@ -8,7 +8,7 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 
 import { nodeJsRuntimes } from '../../../../lambda/models/samLambdaRuntime'
-import { CloudFormationTemplateRegistry, TemplateData } from '../../../../shared/cloudformation/templateRegistry'
+import { CloudFormationTemplateRegistry } from '../../../../shared/cloudformation/templateRegistry'
 import { mkdir, rmrf } from '../../../../shared/filesystem'
 import { makeTemporaryToolkitFolder } from '../../../../shared/filesystemUtilities'
 import { TemplateTargetProperties } from '../../../../shared/sam/debugger/awsSamDebugConfiguration'
@@ -18,7 +18,6 @@ import {
     CODE_TARGET_TYPE,
     createDirectInvokeSamDebugConfiguration,
     DIRECT_INVOKE_TYPE,
-    parseCloudFormationResources,
     TEMPLATE_TARGET_TYPE
 } from '../../../../shared/sam/debugger/awsSamDebugger'
 import {
@@ -295,57 +294,6 @@ describe('AwsSamDebugConfigurationProvider', async () => {
                 undefined
             )
         })
-    })
-})
-
-describe('parseCloudFormationResources', () => {
-    const templateDatum: TemplateData = {
-        path: path.join('the', 'path', 'led', 'us', 'here', 'today'),
-        template: {
-            Resources: {
-                resource1: {
-                    Type: 'AWS::Serverless::Function',
-                    Properties: {
-                        Handler: 'tooHotTo.handler',
-                        CodeUri: 'rightHere'
-                    }
-                }
-            }
-        }
-    }
-
-    it('calls a callback for a single resource', () => {
-        let count = 0
-        parseCloudFormationResources(templateDatum, (resourceKey, resource) => {
-            assert.strictEqual(resourceKey, 'resource1')
-            assert.deepStrictEqual(resource, templateDatum.template.Resources!.resource1)
-            count++
-        })
-        assert.strictEqual(count, 1)
-    })
-
-    it('calls a callback per resource, if the resource exists', () => {
-        let count = 0
-        const biggerDatum: TemplateData = {
-            ...templateDatum,
-            template: {
-                Resources: {
-                    ...templateDatum.template.Resources,
-                    resource2: {
-                        Type: 'AWS::Serverless::Function',
-                        Properties: {
-                            Handler: 'handledWith.care',
-                            CodeUri: 'overThere'
-                        }
-                    },
-                    undefinedResource: undefined
-                }
-            }
-        }
-        parseCloudFormationResources(biggerDatum, () => {
-            count++
-        })
-        assert.strictEqual(count, 2)
     })
 })
 

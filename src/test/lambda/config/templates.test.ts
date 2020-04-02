@@ -801,13 +801,6 @@ describe('getExistingConfiguration', async () => {
         assert.strictEqual(val, undefined)
     })
 
-    it('returns undefined if the registry does not contain the handler', async () => {
-        await writeFile(tempTemplateFile.fsPath, makeSampleSamTemplateYaml(true, { handler: 'thisHandler' }), 'utf8')
-        await registry.addTemplateToRegistry(tempTemplateFile)
-        const val = await getExistingConfiguration(fakeWorkspaceFolder, 'thatHandler', tempTemplateFile, registry)
-        assert.strictEqual(val, undefined)
-    })
-
     it('returns undefined if the legacy config file is not valid JSON', async () => {
         await writeFile(tempTemplateFile.fsPath, makeSampleSamTemplateYaml(true, { handler: matchedHandler }), 'utf8')
         await writeFile(tempConfigFile, makeSampleSamTemplateYaml(true, { handler: matchedHandler }), 'utf8')
