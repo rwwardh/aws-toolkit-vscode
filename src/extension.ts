@@ -24,7 +24,7 @@ import {
     endpointsFileUrl,
     extensionSettingsPrefix,
     githubCreateIssueUrl,
-    githubUrl
+    githubUrl,
 } from './shared/constants'
 import { DefaultAwsContext } from './shared/defaultAwsContext'
 import { DefaultAWSContextCommands } from './shared/defaultAwsContextCommands'
@@ -33,7 +33,7 @@ import {
     aboutToolkit,
     getToolkitEnvironmentDetails,
     showQuickStartWebview,
-    toastNewUser
+    toastNewUser,
 } from './shared/extensionUtilities'
 import { getLogger } from './shared/logger'
 import { activate as activateLogger } from './shared/logger/activation'
@@ -41,7 +41,7 @@ import { DefaultRegionProvider } from './shared/regions/defaultRegionProvider'
 import { EndpointsProvider } from './shared/regions/endpointsProvider'
 import { FileResourceFetcher } from './shared/resourcefetcher/fileResourceFetcher'
 import { HttpResourceFetcher } from './shared/resourcefetcher/httpResourceFetcher'
-import { activate as activateServerless } from './shared/sam/activation'
+import { activate as activateSam } from './shared/sam/activation'
 import { DefaultSettingsConfiguration } from './shared/settingsConfiguration'
 import { AwsTelemetryOptOut } from './shared/telemetry/awsTelemetryOptOut'
 import { DefaultTelemetryService } from './shared/telemetry/defaultTelemetryService'
@@ -50,10 +50,12 @@ import {
     recordAwsHelp,
     recordAwsHelpQuickstart,
     recordAwsReportPluginIssue,
-    recordAwsShowExtensionSource
+    recordAwsShowExtensionSource,
 } from './shared/telemetry/telemetry'
 import { ExtensionDisposableFiles } from './shared/utilities/disposableFiles'
 import { getChannelLogger } from './shared/utilities/vsCodeUtils'
+import { ExtContext } from './shared/extensions'
+import { activate as activateStepFunctions } from './stepFunctions/activation'
 
 let localize: nls.LocalizeFunc
 
@@ -95,7 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await initializeCredentials({
             extensionContext: context,
             awsContext: awsContext,
-            settingsConfiguration: toolkitSettings
+            settingsConfiguration: toolkitSettings,
         })
 
         ext.telemetry = new DefaultTelemetryService(context, awsContext)
@@ -103,6 +105,16 @@ export async function activate(context: vscode.ExtensionContext) {
             console.warn(`Exception while displaying opt-out message: ${err}`)
         })
         await ext.telemetry.start()
+
+        const extContext: ExtContext = {
+            ...context,
+            awsContext: awsContext,
+            regionProvider: regionProvider,
+            settings: toolkitSettings,
+            outputChannel: toolkitOutputChannel,
+            telemetryService: ext.telemetry,
+            chanLogger: getChannelLogger(toolkitOutputChannel),
+        }
 
         context.subscriptions.push(
             vscode.commands.registerCommand('aws.login', async () => await ext.awsContextCommands.onCommandLogin())
@@ -159,24 +171,27 @@ export async function activate(context: vscode.ExtensionContext) {
         await activateCloudFormationTemplateRegistry(context)
 
         await activateCdk({
-            extensionContext: context
+            extensionContext: extContext,
         })
 
-        await activateAwsExplorer({ awsContext, context, awsContextTrees, regionProvider })
+        await activateAwsExplorer({
+            awsContext,
+            context,
+            awsContextTrees,
+            regionProvider,
+            outputChannel: toolkitOutputChannel,
+        })
 
         await activateSchemas({
-            context: context
+            context: extContext,
         })
 
         await ExtensionDisposableFiles.initialize(context)
 
-        await activateServerless({
-            awsContext,
-            extensionContext: context,
-            outputChannel: toolkitOutputChannel,
-            regionProvider,
-            telemetryService: ext.telemetry,
-            toolkitSettings
+        await activateSam(extContext)
+
+        setImmediate(async () => {
+            await activateStepFunctions(context, awsContext, toolkitOutputChannel)
         })
 
         toastNewUser(context)
@@ -211,6 +226,9 @@ function initializeIconPaths(context: vscode.ExtensionContext) {
 
     ext.iconPaths.dark.schema = context.asAbsolutePath('resources/dark/schema.svg')
     ext.iconPaths.light.schema = context.asAbsolutePath('resources/light/schema.svg')
+
+    ext.iconPaths.dark.statemachine = context.asAbsolutePath('resources/dark/stepfunctions/preview.svg')
+    ext.iconPaths.light.statemachine = context.asAbsolutePath('resources/light/stepfunctions/preview.svg')
 }
 
 function initializeManifestPaths(extensionContext: vscode.ExtensionContext) {

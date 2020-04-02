@@ -51,10 +51,13 @@ export function generateDefaultHandlerConfig(): HandlerConfig {
         event: {},
         environmentVariables: {},
         dockerNetwork: undefined,
-        useContainer: undefined
+        useContainer: undefined,
     }
 }
 
+/**
+ * TODO: remove? still needed?
+ */
 export async function getHandlerConfig(params: {
     handlerName: string
     documentUri: vscode.Uri
@@ -141,7 +144,7 @@ async function loadTemplatesConfig(
 
         if (!(await context.fileExists(path))) {
             return {
-                templates: {}
+                templates: {},
             }
         }
 
@@ -283,8 +286,8 @@ export class TemplatesConfigPopulator {
         private readonly modificationOptions: jsonParser.ModificationOptions = {
             formattingOptions: {
                 insertSpaces: true,
-                tabSize: getTabSizeSetting()
-            }
+                tabSize: getTabSizeSetting(),
+            },
         }
     ) {}
 
@@ -301,7 +304,7 @@ export class TemplatesConfigPopulator {
 
         this.ensureJsonPropertyExists(['templates', templateRelativePath, 'handlers', handler], {
             event: {},
-            environmentVariables: {}
+            environmentVariables: {},
         })
 
         return this
@@ -331,7 +334,7 @@ export class TemplatesConfigPopulator {
 
         this.ensureJsonPropertyExists(['templates', templateRelativePath, 'parameterOverrides', parameterName], '', [
             'string',
-            'null'
+            'null',
         ])
 
         return this
@@ -343,7 +346,7 @@ export class TemplatesConfigPopulator {
     } {
         return {
             isDirty: this.isDirty,
-            json: this.json
+            json: this.json,
         }
     }
 
@@ -361,7 +364,7 @@ export class TemplatesConfigPopulator {
                 message: 'Invalid configuration',
                 jsonPath: jsonPath,
                 actualType: node.type,
-                expectedTypes: allowedTypes
+                expectedTypes: allowedTypes,
             })
         }
 
@@ -433,7 +436,7 @@ export async function getExistingConfiguration(
                     eventJson: handlerData.event,
                     environmentVariables: handlerData.environmentVariables,
                     dockerNetwork: handlerData.dockerNetwork,
-                    useContainer: handlerData.useContainer
+                    useContainer: handlerData.useContainer,
                 }
             }
         } catch (e) {

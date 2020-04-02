@@ -14,7 +14,7 @@ import {
     MINIMUM_SAM_CLI_VERSION_INCLUSIVE,
     SamCliNotFoundError,
     SamCliVersionValidation,
-    SamCliVersionValidatorResult
+    SamCliVersionValidatorResult,
 } from './samCliValidator'
 
 const localize = nls.loadMessageBundle()
@@ -22,13 +22,10 @@ const localize = nls.loadMessageBundle()
 // Messages
 const RECOMMENDATION_UPDATE_TOOLKIT: string = localize(
     'AWS.samcli.recommend.update.toolkit',
-    'Please check the Marketplace for an updated Toolkit.'
+    'Check the Marketplace for an updated AWS Toolkit.'
 )
 
-const RECOMMENDATION_UPDATE_SAM_CLI: string = localize(
-    'AWS.samcli.recommend.update.samcli',
-    'Please update your SAM CLI.'
-)
+const RECOMMENDATION_UPDATE_SAM_CLI: string = localize('AWS.samcli.recommend.update.samcli', 'Update your SAM CLI.')
 
 // Notification Actions
 export interface SamCliValidationNotificationAction {
@@ -40,7 +37,7 @@ const actionGoToSamCli: SamCliValidationNotificationAction = {
     label: localize('AWS.samcli.userChoice.visit.install.url', 'Get SAM CLI'),
     invoke: async () => {
         await vscode.env.openExternal(vscode.Uri.parse(samAboutInstallUrl))
-    }
+    },
 }
 
 const actionGoToVsCodeMarketplace: SamCliValidationNotificationAction = {
@@ -48,7 +45,7 @@ const actionGoToVsCodeMarketplace: SamCliValidationNotificationAction = {
     invoke: async () => {
         // TODO : Switch to the Extension panel in VS Code instead
         await vscode.env.openExternal(vscode.Uri.parse(vscodeMarketplaceUrl))
-    }
+    },
 }
 
 // Notifications
@@ -100,7 +97,7 @@ export function makeSamCliValidationNotification(
         return onCreateNotification(
             localize(
                 'AWS.samcli.notification.not.found',
-                'Unable to find SAM CLI. It is required in order to work with Serverless Applications locally.'
+                'Cannot find SAM CLI. It is required in order to work with Serverless Applications locally.'
             ),
             [actionGoToSamCli]
         )

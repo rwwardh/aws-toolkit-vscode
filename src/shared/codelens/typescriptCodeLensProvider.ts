@@ -4,159 +4,34 @@
  */
 
 import * as path from 'path'
-import * as vscode from 'vscode'
-import { NodejsDebugConfiguration } from '../../lambda/local/debugConfiguration'
-import { CloudFormation } from '../cloudformation/cloudformation'
 import { findFileInParentPaths } from '../filesystemUtilities'
 import { LambdaHandlerCandidate } from '../lambdaHandlerSearch'
-import { DefaultSamLocalInvokeCommand, WAIT_FOR_DEBUGGER_MESSAGES } from '../sam/cli/samCliLocalInvoke'
-import { TypescriptLambdaHandlerSearch } from '../typescriptLambdaHandlerSearch'
-import { getChannelLogger, localize } from '../utilities/vsCodeUtils'
-
-import { nodeJsRuntimes } from '../../lambda/models/samLambdaRuntime'
-import { getLogger } from '../logger'
-import { DefaultValidatingSamCliProcessInvoker } from '../sam/cli/defaultValidatingSamCliProcessInvoker'
-import { recordLambdaInvokeLocal, Result, Runtime } from '../telemetry/telemetry'
-import { getStartPort } from '../utilities/debuggerUtils'
 import { normalizeSeparator } from '../utilities/pathUtils'
-import { CodeLensProviderParams, getInvokeCmdKey, makeCodeLenses } from './codeLensUtils'
-import { getHandlerRelativePath, LambdaLocalInvokeParams, LocalLambdaRunner } from './localLambdaRunner'
+import { localize } from '../utilities/vsCodeUtils'
+import {
+    executeSamBuild,
+    generateInputTemplate,
+    getHandlerRelativePath,
+    waitForDebugPort,
+    makeBuildDir,
+    invokeLambdaFunction,
+} from './localLambdaRunner'
+import { ExtContext } from '../extensions'
+import { NodejsDebugConfiguration } from '../../lambda/local/debugConfiguration'
+import { DefaultSamLocalInvokeCommand, WAIT_FOR_DEBUGGER_MESSAGES } from '../sam/cli/samCliLocalInvoke'
+import { DefaultValidatingSamCliProcessInvoker } from '../sam/cli/defaultValidatingSamCliProcessInvoker'
+import { SamLaunchRequestArgs } from '../sam/debugger/samDebugSession'
+import { RuntimeFamily } from '../../lambda/models/samLambdaRuntime'
 
-async function getSamProjectDirPathForFile(filepath: string): Promise<string> {
+export async function getSamProjectDirPathForFile(filepath: string): Promise<string> {
     const packageJsonPath: string | undefined = await findFileInParentPaths(path.dirname(filepath), 'package.json')
     if (!packageJsonPath) {
         throw new Error( // TODO: Do we want to localize errors? This might be confusing if we need to review logs.
-            localize(
-                'AWS.error.sam.local.package_json_not_found',
-                'Unable to find package.json related to {0}',
-                filepath
-            )
+            localize('AWS.error.sam.local.package_json_not_found', 'Cannot find package.json related to: {0}', filepath)
         )
     }
 
     return path.dirname(packageJsonPath)
-}
-
-export function initialize({
-    context,
-    configuration,
-    outputChannel: toolkitOutputChannel,
-    processInvoker = new DefaultValidatingSamCliProcessInvoker({}),
-    localInvokeCommand = new DefaultSamLocalInvokeCommand(getChannelLogger(toolkitOutputChannel), [
-        WAIT_FOR_DEBUGGER_MESSAGES.NODEJS
-    ]),
-    telemetryService
-}: CodeLensProviderParams): void {
-    const invokeLambda = async (params: LambdaLocalInvokeParams & { runtime: string }) => {
-        const samProjectCodeRoot = await getSamProjectDirPathForFile(params.document.uri.fsPath)
-        let debugPort: number | undefined
-
-        if (params.isDebug) {
-            debugPort = await getStartPort()
-        }
-
-        const debugConfig: NodejsDebugConfiguration = {
-            type: 'node',
-            request: 'attach',
-            name: 'SamLocalDebug',
-            preLaunchTask: undefined,
-            address: 'localhost',
-            port: debugPort!,
-            localRoot: samProjectCodeRoot,
-            remoteRoot: '/var/task',
-            protocol: 'inspector',
-            skipFiles: ['/var/runtime/node_modules/**/*.js', '<node_internals>/**/*.js']
-        }
-
-        const localLambdaRunner: LocalLambdaRunner = new LocalLambdaRunner(
-            configuration,
-            params,
-            debugPort,
-            params.runtime,
-            toolkitOutputChannel,
-            processInvoker,
-            localInvokeCommand,
-            debugConfig,
-            samProjectCodeRoot,
-            telemetryService
-        )
-
-        await localLambdaRunner.run()
-    }
-
-    const command = getInvokeCmdKey('javascript')
-    context.subscriptions.push(
-        vscode.commands.registerCommand(command, async (params: LambdaLocalInvokeParams) => {
-            const logger = getLogger()
-
-            const resource = await CloudFormation.getResourceFromTemplate({
-                handlerName: params.handlerName,
-                templatePath: params.samTemplate.fsPath
-            })
-            const lambdaRuntime = CloudFormation.getRuntime(resource)
-            let invokeResult: Result = 'Succeeded'
-            try {
-                if (!nodeJsRuntimes.has(lambdaRuntime)) {
-                    invokeResult = 'Failed'
-                    logger.error(
-                        `Javascript local invoke on ${params.document.uri.fsPath} encountered` +
-                            ` unsupported runtime ${lambdaRuntime}`
-                    )
-
-                    vscode.window.showErrorMessage(
-                        localize(
-                            'AWS.samcli.local.invoke.runtime.unsupported',
-                            'Unsupported {0} runtime: {1}',
-                            'javascript',
-                            lambdaRuntime
-                        )
-                    )
-                } else {
-                    await invokeLambda({
-                        runtime: lambdaRuntime,
-                        ...params
-                    })
-                }
-            } catch (err) {
-                invokeResult = 'Failed'
-                throw err
-            } finally {
-                recordLambdaInvokeLocal({
-                    result: invokeResult,
-                    runtime: lambdaRuntime as Runtime,
-                    debug: params.isDebug
-                })
-            }
-        })
-    )
-}
-
-export function makeTypescriptCodeLensProvider(): vscode.CodeLensProvider {
-    return {
-        provideCodeLenses: async (
-            document: vscode.TextDocument,
-            token: vscode.CancellationToken
-        ): Promise<vscode.CodeLens[]> => {
-            const search: TypescriptLambdaHandlerSearch = new TypescriptLambdaHandlerSearch(
-                document.uri.fsPath,
-                document.getText()
-            )
-            const handlers: LambdaHandlerCandidate[] = await search.findCandidateLambdaHandlers()
-
-            // For Javascript CodeLenses, store the complete relative pathed handler name
-            // (eg: src/app.handler) instead of only the pure handler name (eg: app.handler)
-            // Without this, the CodeLens command is unable to resolve a match back to a sam template.
-            // This is done to address https://github.com/aws/aws-toolkit-vscode/issues/757
-            await decorateHandlerNames(handlers, document.uri.fsPath)
-
-            return makeCodeLenses({
-                document,
-                handlers,
-                token,
-                language: 'javascript'
-            })
-        }
-    }
 }
 
 /**
@@ -164,7 +39,10 @@ export function makeTypescriptCodeLensProvider(): vscode.CodeLensProvider {
  * @param handlers Handlers to apply relative paths to
  * @param parentDocumentPath Path to the file containing these Lambda Handlers
  */
-async function decorateHandlerNames(handlers: LambdaHandlerCandidate[], parentDocumentPath: string): Promise<void> {
+export async function decorateHandlerNames(
+    handlers: LambdaHandlerCandidate[],
+    parentDocumentPath: string
+): Promise<void> {
     const parentDir = path.dirname(parentDocumentPath)
     const packageJsonPath = await findFileInParentPaths(parentDir, 'package.json')
 
@@ -174,7 +52,7 @@ async function decorateHandlerNames(handlers: LambdaHandlerCandidate[], parentDo
 
     const relativePath = getHandlerRelativePath({
         codeRoot: path.dirname(packageJsonPath),
-        filePath: parentDocumentPath
+        filePath: parentDocumentPath,
     })
 
     handlers.forEach(handler => {
@@ -182,4 +60,89 @@ async function decorateHandlerNames(handlers: LambdaHandlerCandidate[], parentDo
 
         handler.handlerName = normalizeSeparator(path.join(relativePath, handlerName))
     })
+}
+
+/**
+ * Gathers and sets launch-config info by inspecting the workspace and creating
+ * temp files/directories as needed.
+ *
+ * Does NOT execute/invoke SAM, docker, etc.
+ */
+export async function makeTypescriptConfig(
+    config: SamLaunchRequestArgs
+    // isDebug: boolean,
+    // workspaceFolder: vscode.WorkspaceFolder,
+    // samProjectCodeRoot: string,
+    // runtime: string,
+    // handlerName: string,
+    // uri: vscode.Uri,
+    // samTemplatePath: string | undefined,
+): Promise<NodejsDebugConfiguration> {
+    if (!config.codeRoot) {
+        // Last-resort attempt to discover the project root (when there is no
+        // `launch.json` nor `template.yaml`).
+        config.codeRoot = await getSamProjectDirPathForFile(config?.samTemplatePath ?? config.documentUri!!.fsPath)
+        if (!config.codeRoot) {
+            // TODO: return error and show it at the caller.
+            throw Error('missing launch.json, template.yaml, and failed to discover project root')
+        }
+    }
+
+    config.baseBuildDir = await makeBuildDir()
+
+    // Always generate a temporary template.yaml, don't use workspace one directly.
+    config.samTemplatePath = await generateInputTemplate(config)
+
+    //  Make a python launch-config from the generic config.
+    const nodejsLaunchConfig: NodejsDebugConfiguration = {
+        ...config, // Compose.
+        type: 'node',
+        request: 'attach',
+        runtimeFamily: RuntimeFamily.NodeJS,
+        name: 'SamLocalDebug',
+        preLaunchTask: undefined,
+        address: 'localhost',
+        port: config.debugPort!!,
+        localRoot: config.codeRoot,
+        remoteRoot: '/var/task',
+        protocol: 'inspector',
+        skipFiles: ['/var/runtime/node_modules/**/*.js', '<node_internals>/**/*.js'],
+    }
+
+    return nodejsLaunchConfig
+}
+
+/**
+ * Launches and attaches debugger to a SAM Node project.
+ */
+export async function invokeTypescriptLambda(ctx: ExtContext, config: NodejsDebugConfiguration) {
+    // Switch over to the output channel so the user has feedback that we're getting things ready
+    ctx.chanLogger.channel.show(true)
+    ctx.chanLogger.info('AWS.output.sam.local.start', 'Preparing to run {0} locally...', config.handlerName)
+
+    const processInvoker = new DefaultValidatingSamCliProcessInvoker({})
+    config.samLocalInvokeCommand = new DefaultSamLocalInvokeCommand(ctx.chanLogger, [WAIT_FOR_DEBUGGER_MESSAGES.NODEJS])
+
+    // XXX: reassignment
+    config.samTemplatePath = await executeSamBuild({
+        baseBuildDir: config.baseBuildDir!!,
+        channelLogger: ctx.chanLogger,
+        codeDir: config.codeRoot,
+        inputTemplatePath: config.samTemplatePath,
+        samProcessInvoker: processInvoker,
+        useContainer: config.sam?.containerBuild,
+    })
+    if (config.invokeTarget.target === 'template') {
+        // XXX: reassignment
+        config.invokeTarget.samTemplatePath = config.samTemplatePath
+    }
+
+    ctx.chanLogger.info(
+        'AWS.output.starting.sam.app.locally',
+        'Starting the SAM Application locally (see Terminal for output)'
+    )
+
+    config.onWillAttachDebugger = waitForDebugPort
+
+    await invokeLambdaFunction(ctx, config)
 }

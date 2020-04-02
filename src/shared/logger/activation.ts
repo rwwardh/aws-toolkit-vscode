@@ -8,7 +8,7 @@ import * as os from 'os'
 import * as path from 'path'
 import * as vscode from 'vscode'
 import * as nls from 'vscode-nls'
-import { Logger, LogLevel } from '.'
+import { Logger, LogLevel, getLogger } from '.'
 import { extensionSettingsPrefix } from '../constants'
 import { mkdir } from '../filesystem'
 import { fileExists } from '../filesystemUtilities'
@@ -32,11 +32,9 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     const logLevel = getLogLevel()
 
     await ensureLogFolderExists(path.dirname(logPath))
-
     setLogger(makeLogger(logLevel, logPath, outputChannel, extensionContext.subscriptions))
-
     await registerLoggerCommands(extensionContext)
-
+    getLogger().info(`log level: ${logLevel}`)
     outputChannel.appendLine(
         localize('AWS.log.fileLocation', 'Error logs for this session are permanently stored in {0}', logPath)
     )
@@ -99,8 +97,10 @@ async function ensureLogFolderExists(logFolder: string): Promise<void> {
 }
 
 async function registerLoggerCommands(context: vscode.ExtensionContext): Promise<void> {
-    context.subscriptions.push(vscode.commands.registerCommand('aws.viewLogs', async () => {
-        await vscode.window.showTextDocument(vscode.Uri.file(path.normalize(LOG_PATH)))
-        recordVscodeViewLogs()
-    }))
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aws.viewLogs', async () => {
+            await vscode.window.showTextDocument(vscode.Uri.file(path.normalize(LOG_PATH)))
+            recordVscodeViewLogs()
+        })
+    )
 }

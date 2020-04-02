@@ -55,6 +55,9 @@ export interface FileFunctions {
     fileExists: typeof fileExists
 }
 
+/**
+ * An elaborate way to run `sam build`.
+ */
 export class SamCliBuildInvocation {
     private readonly buildDir: string
     private readonly baseDir?: string
@@ -105,12 +108,12 @@ export class SamCliBuildInvocation {
 
         const env: NodeJS.ProcessEnv = {
             ...process.env,
-            ...this.environmentVariables
+            ...this.environmentVariables,
         }
 
         const childProcessResult = await this.invoker.invoke({
             spawnOptions: { env },
-            arguments: invokeArgs
+            arguments: invokeArgs,
         })
 
         logAndThrowIfUnexpectedExitCode(childProcessResult, 0)
@@ -135,6 +138,6 @@ export class SamCliBuildInvocation {
 
 function getDefaultFileFunctions(): FileFunctions {
     return {
-        fileExists
+        fileExists,
     }
 }

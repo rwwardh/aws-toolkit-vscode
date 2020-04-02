@@ -60,7 +60,7 @@ function notifyUserSamCliNotDetected(samCliConfig: SamCliConfiguration): void {
             localize(
                 'AWS.samcli.error.notFound',
                 // tslint:disable-next-line:max-line-length
-                'Unable to find the SAM CLI, which is required to create new Serverless Applications and debug them locally. If you have already installed the SAM CLI, update your User Settings by locating it.'
+                'Cannot find SAM CLI, which is required to create new Serverless Applications and debug them locally. If you have already installed the SAM CLI, update your User Settings by locating it.'
             ),
             learnMore,
             browseToSamCli
@@ -73,7 +73,7 @@ function notifyUserSamCliNotDetected(samCliConfig: SamCliConfiguration): void {
                     canSelectFiles: true,
                     canSelectFolders: false,
                     canSelectMany: false,
-                    openLabel: 'Apply location to Settings'
+                    openLabel: 'Apply location to Settings',
                 })
 
                 if (!!location && location.length === 1) {

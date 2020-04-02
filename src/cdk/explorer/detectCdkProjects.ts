@@ -10,7 +10,7 @@ import { getLogger } from '../../shared/logger'
 import { CdkAppLocation } from './cdkProject'
 
 export async function detectCdkProjects(
-    workspaceFolders: vscode.WorkspaceFolder[] | undefined = vscode.workspace.workspaceFolders
+    workspaceFolders: ReadonlyArray<vscode.WorkspaceFolder> | undefined = vscode.workspace.workspaceFolders
 ): Promise<CdkAppLocation[]> {
     if (!workspaceFolders) {
         return []
@@ -41,7 +41,7 @@ async function detectCdkProjectsFromWorkspaceFolder(
 }
 
 export async function* detectLocalCdkProjects({
-    workspaceUris
+    workspaceUris,
 }: {
     workspaceUris: vscode.Uri[]
 }): AsyncIterableIterator<vscode.Uri> {

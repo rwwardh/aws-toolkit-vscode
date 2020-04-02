@@ -3,19 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as os from 'os'
-import * as vscode from 'vscode'
-import { DRIVE_LETTER_REGEX } from '../../shared/codelens/codeLensUtils'
+import { nodeJsRuntimes } from '../../lambda/models/samLambdaRuntime'
+import { SamLaunchRequestArgs } from '../../shared/sam/debugger/samDebugSession'
+import { dotNetRuntimes, pythonRuntimes, RuntimeFamily } from '../models/samLambdaRuntime'
 
-const DOTNET_CORE_DEBUGGER_PATH = '/tmp/lambci_debug_files/vsdbg'
+export const DOTNET_CORE_DEBUGGER_PATH = '/tmp/lambci_debug_files/vsdbg'
 
-export interface DebugConfiguration extends vscode.DebugConfiguration {
-    readonly type: 'node' | 'python' | 'coreclr'
-    readonly request: 'attach'
-}
-
-export interface NodejsDebugConfiguration extends DebugConfiguration {
-    readonly type: 'node'
+export interface NodejsDebugConfiguration extends SamLaunchRequestArgs {
+    readonly runtimeFamily: RuntimeFamily.NodeJS
     readonly preLaunchTask?: string
     readonly address: 'localhost'
     readonly localRoot: string
@@ -29,20 +24,17 @@ export interface PythonPathMapping {
     remoteRoot: string
 }
 
-export interface PythonPathMapping {
-    localRoot: string
-    remoteRoot: string
-}
-
-export interface PythonDebugConfiguration extends DebugConfiguration {
-    readonly type: 'python'
+export interface PythonDebugConfiguration extends SamLaunchRequestArgs {
+    readonly runtimeFamily: RuntimeFamily.Python
     readonly host: string
+    // TODO: remove, use `debugPort` instead?
     readonly port: number
     readonly pathMappings: PythonPathMapping[]
+    readonly manifestPath: string
 }
 
-export interface DotNetCoreDebugConfiguration extends DebugConfiguration {
-    type: 'coreclr'
+export interface DotNetCoreDebugConfiguration extends SamLaunchRequestArgs {
+    readonly runtimeFamily: RuntimeFamily.DotNetCore
     processId: string
     pipeTransport: PipeTransport
     windows: {
@@ -60,43 +52,43 @@ export interface PipeTransport {
     pipeCwd: string
 }
 
-export interface MakeCoreCLRDebugConfigurationArguments {
-    port: number
-    codeUri: string
+/**
+ * Gets a `RuntimeFamily` from a vscode document languageId.
+ */
+export function getRuntimeFamily(langId: string): string {
+    switch (langId) {
+        case 'typescript':
+        case 'javascript':
+            return 'node'
+        case 'csharp':
+            return 'coreclr'
+        case 'python':
+            return 'python'
+        default:
+            return 'unknown'
+    }
 }
 
-export function makeCoreCLRDebugConfiguration({
-    codeUri,
-    port
-}: MakeCoreCLRDebugConfigurationArguments): DotNetCoreDebugConfiguration {
-    const pipeArgs = ['-c', `docker exec -i $(docker ps -q -f publish=${port}) \${debuggerCommand}`]
-
-    if (os.platform() === 'win32') {
-        // Coerce drive letter to uppercase. While Windows is case-insensitive, sourceFileMap is case-sensitive.
-        codeUri = codeUri.replace(DRIVE_LETTER_REGEX, match => match.toUpperCase())
+/**
+ * Guesses a reasonable default runtime value from a vscode document
+ * languageId.
+ */
+export function getDefaultRuntime(langId: string): string | undefined {
+    switch (langId) {
+        case 'typescript':
+        case 'javascript':
+            return nodeJsRuntimes.first()
+        case 'csharp':
+            return dotNetRuntimes.first()
+        case 'python':
+            return pythonRuntimes.first()
+        default:
+            return undefined
     }
+}
 
-    return {
-        name: 'SamLocalDebug',
-        type: 'coreclr',
-        request: 'attach',
-        processId: '1',
-        pipeTransport: {
-            pipeProgram: 'sh',
-            pipeArgs,
-            debuggerPath: DOTNET_CORE_DEBUGGER_PATH,
-            pipeCwd: codeUri
-        },
-        windows: {
-            pipeTransport: {
-                pipeProgram: 'powershell',
-                pipeArgs,
-                debuggerPath: DOTNET_CORE_DEBUGGER_PATH,
-                pipeCwd: codeUri
-            }
-        },
-        sourceFileMap: {
-            ['/var/task']: codeUri
-        }
+export function assertTargetKind(config: SamLaunchRequestArgs, expectedTarget: 'code' | 'template'): void {
+    if (config.invokeTarget.target !== expectedTarget) {
+        throw Error(`SAM debug: invalid config: ${config}`)
     }
 }

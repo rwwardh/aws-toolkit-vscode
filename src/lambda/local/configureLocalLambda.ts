@@ -15,7 +15,7 @@ import {
     getTemplatesConfigPath,
     showTemplatesConfigurationError,
     TemplatesConfigFieldTypeError,
-    TemplatesConfigPopulator
+    TemplatesConfigPopulator,
 } from '../config/templates'
 
 export interface ConfigureLocalLambdaContext {
@@ -52,8 +52,8 @@ export async function configureLocalLambda(
             formattingOptions: {
                 insertSpaces: true,
                 tabSize: getTabSize(editor),
-                eol: editor.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n'
-            }
+                eol: editor.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n',
+            },
         })
             .ensureTemplateHandlerPropertiesExist(templateRelativePath, handler)
             .getResults()
@@ -73,7 +73,7 @@ export async function configureLocalLambda(
         }
 
         await context.showTextDocument(editor.document, {
-            selection: await getEventRange(editor, templateRelativePath, handler, context)
+            selection: await getEventRange(editor, templateRelativePath, handler, context),
         })
     } catch (e) {
         configureResult = 'Failed'
@@ -117,21 +117,21 @@ async function getEventRange(
         c => c.name === relativeTemplatePath
     )
     if (!templateSymbol) {
-        logger.warn(`Unable to find template section ${relativeTemplatePath} in ${editor.document.uri}`)
+        logger.warn(`Cannot find template section '${relativeTemplatePath}' in: ${editor.document.uri}`)
 
         return defaultRange
     }
 
     const handlersSymbol: vscode.DocumentSymbol | undefined = templateSymbol!.children.find(c => c.name === 'handlers')
     if (!handlersSymbol) {
-        logger.warn(`Unable to find handlers section for ${relativeTemplatePath} in ${editor.document.uri}`)
+        logger.warn(`Cannot find handlers section for '${relativeTemplatePath}' in: ${editor.document.uri}`)
 
         return defaultRange
     }
 
     const handlerSymbol: vscode.DocumentSymbol | undefined = handlersSymbol.children.find(c => c.name === handler)
     if (!handlerSymbol) {
-        logger.warn(`Unable to find config for handler ${handler}`)
+        logger.warn(`Cannot find config for handler: ${handler}`)
 
         return defaultRange
     }
