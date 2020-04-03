@@ -404,8 +404,7 @@ export class TemplatesConfigPopulator {
 /**
  * Returns a previously-configured event payload if the following are true (`undefined` if false):
  * * old `.aws/templates.json` file exists and is valid JSON
- * * handler exists in template registry
- * * handler also exists in `.aws/templates.json`
+ * * handler exists in `.aws/templates.json`
  * @param workspaceFolder Current workspace folder
  * @param handler Function's handler
  * @param samTemplate Originating SAM Template

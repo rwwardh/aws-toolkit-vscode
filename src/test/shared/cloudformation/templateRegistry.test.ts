@@ -10,7 +10,7 @@ import * as vscode from 'vscode'
 import {
     CloudFormationTemplateRegistry,
     getResourcesFromTemplateDatum,
-    TemplateDatum
+    TemplateDatum,
 } from '../../../shared/cloudformation/templateRegistry'
 import { rmrf } from '../../../shared/filesystem'
 import { makeTemporaryToolkitFolder } from '../../../shared/filesystemUtilities'
@@ -144,19 +144,20 @@ describe('parseCloudFormationResources', () => {
                     Type: 'AWS::Serverless::Function',
                     Properties: {
                         Handler: 'tooHotTo.handler',
-                        CodeUri: 'rightHere'
-                    }
-                }
-            }
-        }
+                        CodeUri: 'rightHere',
+                    },
+                },
+            },
+        },
     }
 
-    it('calls a callback for a single resource', () => {
+    it('creates a map with a single resource', () => {
         const resources = getResourcesFromTemplateDatum(templateDatum)
         assert.strictEqual(resources.size, 1)
+        assert.strictEqual(resources.get('resource1')?.Properties?.Handler, 'tooHotTo.handler')
     })
 
-    it('calls a callback per resource, if the resource exists', () => {
+    it('creates a map with an entry for each defined resource', () => {
         const biggerDatum: TemplateDatum = {
             ...templateDatum,
             template: {
@@ -166,15 +167,18 @@ describe('parseCloudFormationResources', () => {
                         Type: 'AWS::Serverless::Function',
                         Properties: {
                             Handler: 'handledWith.care',
-                            CodeUri: 'overThere'
-                        }
+                            CodeUri: 'overThere',
+                        },
                     },
-                    undefinedResource: undefined
-                }
-            }
+                    undefinedResource: undefined,
+                },
+            },
         }
         const resources = getResourcesFromTemplateDatum(biggerDatum)
         assert.strictEqual(resources.size, 2)
+        assert.ok(resources.has('resource1'))
+        assert.ok(resources.has('resource2'))
+        assert.ok(!resources.has('undefinedResource'))
     })
 })
 
